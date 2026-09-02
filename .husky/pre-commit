@@ -1,0 +1,5 @@
+npx eslint . --fix --max-warnings 0
+npx prettier --write .
+node scripts/check-version.js
+node scripts/check-skills-drift.js
+git add -u

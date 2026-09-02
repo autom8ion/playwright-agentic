@@ -1,0 +1,51 @@
+{
+    "name": "playwright-agentic",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Agentic Playwright: a rule-enforced Playwright + TypeScript testing scaffold built for AI coding assistants (Claude Code).",
+    "type": "module",
+    "scripts": {
+        "test": "playwright test --grep-invert @destructive",
+        "test:smoke": "playwright test --grep @smoke",
+        "test:sanity": "playwright test --grep @sanity",
+        "test:regression": "playwright test --grep @regression",
+        "test:api": "playwright test --grep @api",
+        "test:e2e": "playwright test --grep @e2e",
+        "test:destructive": "playwright test --grep @destructive --workers 1",
+        "test:headed": "playwright test --headed --grep-invert @destructive",
+        "test:ui": "playwright test --ui",
+        "setup:user": "tsx scripts/setup-test-user.ts",
+        "lint": "eslint . --max-warnings 0",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "typecheck": "tsc --noEmit",
+        "check:version": "node scripts/check-version.js",
+        "version:stamp": "node scripts/version-stamp.js",
+        "check:skills-drift": "node scripts/check-skills-drift.js",
+        "prepare": "husky"
+    },
+    "dependencies": {
+        "@faker-js/faker": "^9.6.0",
+        "zod": "^4.0.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.15.0",
+        "@playwright/test": "^1.55.0",
+        "@types/node": "^22.10.0",
+        "@typescript-eslint/eslint-plugin": "^8.15.0",
+        "@typescript-eslint/parser": "^8.15.0",
+        "dotenv": "^16.4.5",
+        "eslint": "^9.15.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-playwright": "^2.0.0",
+        "globals": "^15.12.0",
+        "husky": "^9.1.7",
+        "prettier": "^3.3.3",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.2"
+    },
+    "engines": {
+        "node": ">=18.19"
+    }
+}
