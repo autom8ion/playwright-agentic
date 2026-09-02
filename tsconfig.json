@@ -11,16 +11,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
-        "isolatedModules": true,
-        "baseUrl": ".",
-        "paths": {
-            "config/*": ["config/*"],
-            "enums/*": ["enums/*"],
-            "fixtures/*": ["fixtures/*"],
-            "helpers/*": ["helpers/*"],
-            "pages/*": ["pages/*"],
-            "test-data/*": ["test-data/*"]
-        }
+        "isolatedModules": true
     },
     "include": ["**/*.ts"],
     "exclude": ["node_modules", "playwright-report", "test-results", ".auth"]
