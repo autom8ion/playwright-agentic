@@ -45,22 +45,47 @@ next prompt. Don't stack multiple unverified changes.
    `.auth/app/appStorageState.json`. Tests that must start logged out call
    the `resetStorageState` fixture. See `.claude/skills/auth-storage-state/SKILL.md`.
 10. **Explore before generating page objects.** Before writing or editing a
-    page object or UI test, open the real page (browser tooling / MCP) and
-    confirm the locators exist. Don't guess selectors.
+    page object or UI test, open the real page (via the `playwright-cli`
+    skill, or MCP browser tools) and confirm the locators exist. Don't guess
+    selectors. See `.claude/skills/playwright-cli/SKILL.md`.
 
 ## Directory map
 
 ```
-.claude/            Claude Code constitution, skills, enforcement hook
+.claude/            Claude Code constitution, skills, agents, enforcement hook
+.claude/agents/      Playwright plan/generate/heal subagent definitions
+.claude/prompts/     Canonical prompt templates for the agents above
 config/              env.ts — typed access to env/.env
 enums/               endpoints, messages, tags — no magic strings in tests
 fixtures/pom/        test-options.ts is the only import point for specs
 helpers/             auth.ts — API helpers shared by setup + scripts
 pages/               Page Object Model classes
+specs/               Test plans written by the planner agent
 test-data/           factories/ (Faker), static/ (as const), schemas/ (Zod)
-tests/app/           functional/, api/, e2e/, auth.setup.ts
+tests/app/           functional/, api/, e2e/, auth.setup.ts, seed.spec.ts
 scripts/             one-off/CI scripts (setup-test-user, version checks)
+.mcp.json            Registers the Playwright test MCP server (agents' tools)
 ```
+
+## Plan → Generate → Heal agents
+
+Three Playwright-provided subagents, backed by the `playwright-test` MCP
+server (`.mcp.json`), handle exploring the app and writing/fixing tests via
+real browser interaction rather than guessed selectors:
+
+- **`playwright-test-planner`** (`.claude/agents/playwright-test-planner.md`) — explores the
+  live app from `tests/app/seed.spec.ts` and writes a scenario plan to `specs/*.plan.md`.
+- **`playwright-test-generator`** (`.claude/agents/playwright-test-generator.md`) — turns one
+  plan scenario at a time into a real spec file, driving the browser live rather than guessing
+  markup.
+- **`playwright-test-healer`** (`.claude/agents/playwright-test-healer.md`) — runs the suite,
+  and for each failure, inspects the live app to find and fix the root cause.
+
+All three have this repo's conventions appended to their agent files (Constitution imports,
+fixtures, tagging, POM) — they don't just write generic Playwright. The enforcement hook covers
+the generator's file-writing tool the same as native Write/Edit (see
+`.claude/scripts/enforce_constitution.py`). **`.claude/skills/maintenance/SKILL.md` is the router**
+for when to reach for which agent — start there for "the app changed, make sure tests reflect it."
 
 ## Skills index
 
@@ -72,6 +97,9 @@ scripts/             one-off/CI scripts (setup-test-user, version checks)
 - `.claude/skills/tagging/SKILL.md` — the six tags and what each means
 - `.claude/skills/auth-storage-state/SKILL.md` — auth.setup.ts and resetStorageState
 - `.claude/skills/ai-native-workflow/SKILL.md` — how to approach non-trivial changes (confidence, unknowns, when to stop and ask)
+- `.claude/skills/maintenance/SKILL.md` — router for healing/extending tests after app changes; when to heal vs. plan+generate
+- `.claude/skills/playwright-cli/SKILL.md` — drive a real browser from the command line to explore the app before writing selectors
+- `.claude/skills/playwright-trace/SKILL.md` — inspect `.zip` trace files from a failed run without opening a browser
 
 ## Confidence rule
 

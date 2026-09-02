@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-PreToolUse hook: mechanically blocks Write/Edit/MultiEdit calls that would
-introduce known anti-patterns from the Constitution (see CLAUDE.md and
-.claude/skills/*/SKILL.md). This is a hard backstop beneath prompt-level
-rules — it does not replace them, and it only catches what's cheap and
-reliable to detect with regex over the text a tool call is about to write.
+PreToolUse hook: mechanically blocks Write/Edit/MultiEdit calls — and the
+Playwright test-generator agent's "generator_write_test" MCP tool, which
+writes files the same way but bypasses the native tools entirely — that
+would introduce known anti-patterns from the Constitution (see CLAUDE.md
+and .claude/skills/*/SKILL.md). This is a hard backstop beneath
+prompt-level rules — it does not replace them, and it only catches what's
+cheap and reliable to detect with regex over the text a tool call is about
+to write.
 
 Protocol: reads the PreToolUse JSON payload on stdin. Exit 0 = allow.
 Exit 2 + a message on stderr = block; Claude Code shows that message to
@@ -105,6 +108,9 @@ rule(
 )
 
 
+GENERATOR_WRITE_TOOL = "mcp__playwright-test__generator_write_test"
+
+
 def extract_texts(tool_name: str, tool_input: dict):
     """Yield the text blob(s) about to be written for this tool call."""
     if tool_name == "Write":
@@ -114,6 +120,14 @@ def extract_texts(tool_name: str, tool_input: dict):
     elif tool_name == "MultiEdit":
         for edit in tool_input.get("edits", []) or []:
             yield edit.get("new_string", "")
+    elif tool_name == GENERATOR_WRITE_TOOL:
+        yield tool_input.get("code", "")
+
+
+def extract_file_path(tool_name: str, tool_input: dict) -> str:
+    if tool_name == GENERATOR_WRITE_TOOL:
+        return tool_input.get("fileName", "")
+    return tool_input.get("file_path", "")
 
 
 def main() -> int:
@@ -123,11 +137,11 @@ def main() -> int:
         return 0
 
     tool_name = payload.get("tool_name", "")
-    if tool_name not in ("Write", "Edit", "MultiEdit"):
+    if tool_name not in ("Write", "Edit", "MultiEdit", GENERATOR_WRITE_TOOL):
         return 0
 
     tool_input = payload.get("tool_input", {}) or {}
-    file_path = tool_input.get("file_path", "")
+    file_path = extract_file_path(tool_name, tool_input)
     if not file_path:
         return 0
 

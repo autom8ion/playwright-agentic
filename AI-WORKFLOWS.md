@@ -48,11 +48,38 @@ call; `test-options.ts` doesn't change unless you're adding a new re-export.
 ## Investigate a flaky or failing test
 
 1. Run it in isolation with trace on: `npx playwright test <file> --trace on`.
-2. Open the trace (`npx playwright show-trace`) before changing anything —
-   don't add a `waitForTimeout` to paper over a race (it's blocked by the
-   hook anyway). Find the actual condition the test should be waiting on.
+2. Open the trace — `npx playwright show-trace` for the visual viewer, or the
+   `playwright-trace` skill to inspect it from the command line (actions,
+   requests, console, errors) without a browser. Don't add a
+   `waitForTimeout` to paper over a race (it's blocked by the hook anyway) —
+   find the actual condition the test should be waiting on.
 3. If the fix is a locator or timing issue in a page object, fix it there so
    every test using that page object benefits.
+4. One test, quick diagnosis → fix it yourself as above. Several tests
+   failing, or you don't yet know the root cause → this is what the
+   `playwright-test-healer` agent is for (see "React to an application
+   change" below); it will drive the real browser to diagnose each failure
+   rather than guessing from the stack trace alone.
+
+## React to an application change (proactive maintenance)
+
+The target app changed (a flow was reworked, a page redesigned, a feature
+added) and tests need to catch up — whether something already failed or
+not. Start with `.claude/skills/maintenance/SKILL.md`; short version:
+
+1. Run the affected tests (or the full suite if you're not sure what's
+   affected) and classify each failure: stale test mechanics (heal it) vs.
+   scenario no longer exists (delete it, don't force it green) vs.
+   ambiguous/possible regression (stop and ask — don't heal over a real bug).
+2. Failures with a clear stale-selector/assertion cause → the
+   `playwright-test-healer` agent (`.claude/agents/playwright-test-healer.md`).
+3. New/changed functionality with no failing test to anchor on → the
+   `playwright-test-planner` agent to scope scenarios into `specs/*.plan.md`,
+   then `playwright-test-generator` per scenario.
+4. Re-run the full suite (including `npm run test:destructive` if anything
+   touching shared state was touched), typecheck/lint/format, and check for
+   any `test.fixme()` the healer left — that means it found a likely
+   **application** regression, not a stale test, and it needs a human look.
 
 ## Release a version bump
 
