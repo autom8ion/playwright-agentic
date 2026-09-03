@@ -18,8 +18,9 @@ Read `CLAUDE.md` first — this file is the "how," that one is the "law."
 
 ## Add a new page object
 
-1. Open the real page and inspect it (browser tooling / MCP) — don't guess
-   locators. See `.claude/skills/ai-native-workflow/SKILL.md`.
+1. Open the real page and inspect it: `npx playwright cli open <url>` then
+   `npx playwright cli snapshot` — read locators off the accessibility tree,
+   don't guess them. See `.claude/skills/playwright-cli/SKILL.md`.
 2. Create `pages/<Name>Page.ts` following the three-section structure in
    `.claude/skills/page-objects/SKILL.md` (interactive locators → feedback
    locators → action methods).
@@ -53,8 +54,11 @@ call; `test-options.ts` doesn't change unless you're adding a new re-export.
    requests, console, errors) without a browser. Don't add a
    `waitForTimeout` to paper over a race (it's blocked by the hook anyway) —
    find the actual condition the test should be waiting on.
-3. If the fix is a locator or timing issue in a page object, fix it there so
-   every test using that page object benefits.
+3. If the trace points at a specific locator, confirm the fix live before
+   editing the page object: `npx playwright cli open <url>` to reach the
+   same state, then `npx playwright cli snapshot` (or `click`/`fill` to
+   reproduce the exact steps) to check what the correct locator actually is
+   now. Fix it in the page object so every test using it benefits.
 4. One test, quick diagnosis → fix it yourself as above. Several tests
    failing, or you don't yet know the root cause → this is what the
    `playwright-test-healer` agent is for (see "React to an application

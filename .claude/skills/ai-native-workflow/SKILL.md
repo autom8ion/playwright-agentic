@@ -27,12 +27,20 @@ clarifying question up front.
 ## Explore before generating
 
 Before creating or editing a page object or a UI test, open the real page
-(browser tooling / MCP) and confirm the locators you're about to write
-actually resolve, uniquely, against the live DOM. Never invent a
-`getByRole` name, `getByPlaceholder` string, or CSS fallback from memory or
-by guessing at conventional naming — read it off the page. If exploration
-itself fails (page unreachable, tool unavailable), stop and tell the human;
-don't substitute a different, unverified approach.
+with the `playwright-cli` skill (`npx playwright cli open <url>` then
+`npx playwright cli snapshot`) and confirm the locators you're about to
+write actually resolve, uniquely, against the live accessibility tree.
+Never invent a `getByRole` name, `getByPlaceholder` string, or CSS fallback
+from memory or by guessing at conventional naming — read it off the
+snapshot. See `.claude/skills/playwright-cli/SKILL.md` for the full command
+set (clicking, filling, network/console inspection). If exploration itself
+fails (page unreachable, tool unavailable), stop and tell the human; don't
+substitute a different, unverified approach.
+
+This is separate from the plan/generate/heal agents, which explore and
+write tests through their own MCP browser tools — reach for `playwright-cli`
+yourself for a quick one-off check; delegate to an agent (see
+`.claude/skills/maintenance/SKILL.md`) for a full scenario worth of work.
 
 ## The golden rule: Verify → Commit → Proceed
 

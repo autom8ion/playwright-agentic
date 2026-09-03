@@ -45,9 +45,12 @@ next prompt. Don't stack multiple unverified changes.
    `.auth/app/appStorageState.json`. Tests that must start logged out call
    the `resetStorageState` fixture. See `.claude/skills/auth-storage-state/SKILL.md`.
 10. **Explore before generating page objects.** Before writing or editing a
-    page object or UI test, open the real page (via the `playwright-cli`
-    skill, or MCP browser tools) and confirm the locators exist. Don't guess
-    selectors. See `.claude/skills/playwright-cli/SKILL.md`.
+    page object or UI test, open the real page with `npx playwright cli open
+<url>` and `npx playwright cli snapshot`, and confirm the locator you're
+    about to write resolves uniquely against the real accessibility tree.
+    Don't guess selectors. This is a different mechanism from the plan/
+    generate/heal agents' MCP browser tools — reach for it when _you_ (not a
+    subagent) need a quick one-off look. See `.claude/skills/playwright-cli/SKILL.md`.
 
 ## Directory map
 

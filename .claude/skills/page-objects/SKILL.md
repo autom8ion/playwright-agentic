@@ -22,7 +22,7 @@ export class LoginPage {
 
     // --- Interactive element locators ---
     get userNameInput(): Locator {
-        return this.page.getByPlaceholder('User Name');
+        return this.page.getByPlaceholder('UserName');
     }
 
     // --- Feedback / validation message locators ---
@@ -56,8 +56,20 @@ export class LoginPage {
 
 ## Before writing or editing a page object
 
-Explore the real page first (browser tooling / MCP, or `playwright test --ui`
-against it) and confirm the locator actually resolves uniquely. Don't invent
-a `getByRole` name or `getByPlaceholder` string from memory — copy it from
-what the page actually renders. If you can't reach the page, stop and say so
-rather than guessing.
+Explore the real page first — don't invent a `getByRole` name or
+`getByPlaceholder` string from memory, copy it from what the page actually
+renders:
+
+```bash
+npx playwright cli open <url>       # navigate there (headless, persists across calls)
+npx playwright cli snapshot         # accessibility tree, with each element's role/accessible name
+npx playwright cli close            # when done exploring
+```
+
+The snapshot's `textbox "UserName"` / `button "Login"` lines are exactly the
+`name` argument `getByRole`/`getByPlaceholder` need — this is how the
+placeholder text above (`'UserName'`, no space) was confirmed against the
+real demoqa login form rather than guessed. See
+`.claude/skills/playwright-cli/SKILL.md` for the full command set
+(clicking, filling, network inspection, tracing). If you can't reach the
+page, stop and say so rather than guessing.
