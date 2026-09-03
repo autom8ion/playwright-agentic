@@ -12,6 +12,11 @@ the hook can't see the violation.
 One prompt → review the diff → run the relevant tests → commit working code →
 next prompt. Don't stack multiple unverified changes.
 
+## Commands
+
+See `README.md` for setup and the full command list; `npm run check:version` /
+`check:skills-drift` keep VERSION/CHANGELOG and the skills index honest.
+
 ## Non-negotiables
 
 1. **Page Object Model.** All locators and page interactions live in
@@ -103,6 +108,7 @@ for when to reach for which agent — start there for "the app changed, make sur
 - `.claude/skills/maintenance/SKILL.md` — router for healing/extending tests after app changes; when to heal vs. plan+generate
 - `.claude/skills/playwright-cli/SKILL.md` — drive a real browser from the command line to explore the app before writing selectors
 - `.claude/skills/playwright-trace/SKILL.md` — inspect `.zip` trace files from a failed run without opening a browser
+- `.claude/skills/pull-requests/SKILL.md` — pre-PR checklist mirroring CI, version-bump and commit/PR conventions
 
 ## Confidence rule
 
