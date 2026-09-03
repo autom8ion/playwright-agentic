@@ -16,7 +16,19 @@ export default defineConfig({
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 2 : undefined,
     reporter: process.env.CI
-        ? [['github'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]]
+        ? [
+              ['github'],
+              ['html', { open: 'never' }],
+              ['junit', { outputFile: 'test-results/junit.xml' }],
+              // CTRF (https://ctrf.io): framework-agnostic JSON report consumed by the
+              // KPI-Dashboard qa_collector alongside the JUnit XML above. Its own
+              // `flaky`/`retries` fields (meaningful here since CI sets retries: 2) are
+              // a stronger flaky-test signal than qa_collector's own history-based one.
+              [
+                  'playwright-ctrf-json-reporter',
+                  { outputDir: 'ctrf', outputFile: 'ctrf-report.json', appName: 'playwright-agentic' },
+              ],
+          ]
         : [['list'], ['html', { open: 'never' }]],
 
     use: {
