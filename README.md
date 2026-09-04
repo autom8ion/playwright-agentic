@@ -1,7 +1,8 @@
 # playwright-agentic
 
 A Claude Code–native Playwright + TypeScript testing scaffold, modeled on
-idavidov13/agentic-playwright: instead of teaching Claude how to write tests
+[idavidov13/agentic-playwright](https://github.com/idavidov13/agentic-playwright):
+instead of teaching Claude how to write tests
 in every prompt, the rules live in the repo — a **Constitution** (`CLAUDE.md`), topic **Skills**
 (`.claude/skills/*/SKILL.md`), and a **PreToolUse hook**
 (`.claude/scripts/enforce_constitution.py`) that mechanically blocks the

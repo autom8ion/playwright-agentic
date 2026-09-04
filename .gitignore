@@ -150,5 +150,6 @@ vite.config.ts.timestamp-*
 /playwright/.cache/
 .auth/
 .playwright-cli/
+.playwright-mcp/
 .playwright/
 
