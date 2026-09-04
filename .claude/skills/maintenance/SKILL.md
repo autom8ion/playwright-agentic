@@ -27,9 +27,12 @@ Run the affected tests first (`npx playwright test <path> --grep-invert @destruc
   flow changed enough that current coverage doesn't reflect it) → there's nothing to heal. Use
   `playwright-test-planner` to scope what's new, then `playwright-test-generator` per scenario. This
   is the "proactive" half — don't wait for a failure if you already know the app changed.
-- **Ambiguous** (a failure could be a real regression, not a stale test) → stop and ask. Healing a
-  test into passing against a genuine bug hides the bug; that's a call only a human should make.
-  `playwright-test-healer`'s own instructions cover this (`test.fixme()` + comment when it can't tell).
+- **Not obviously either of the above** (could be flaky, could be a real regression, not clearly a
+  stale test) → don't guess. Run `.claude/skills/failure-triage/SKILL.md` (`playwright-test-triager`
+  agent) first — it classifies the failure as flaky, a test defect, or a product regression with
+  evidence, then routes to `flaky-tests`, `playwright-test-healer`, or a human report respectively.
+  Healing a test into passing against a genuine bug hides the bug, and "fixing" a flaky test by
+  patching its symptom just moves the flake elsewhere — triage exists so neither happens by accident.
 
 A single maintenance pass often needs both: heal what broke, generate coverage for what's new.
 
@@ -37,12 +40,19 @@ A single maintenance pass often needs both: heal what broke, generate coverage f
 
 Each is a subagent (`Agent` tool, `subagent_type` = the agent's `name` in its frontmatter). Give it
 a self-contained prompt — it has no memory of this conversation. The generated
-`.claude/prompts/playwright-test-*.md` files show the canonical prompt shape for each; follow that
-shape rather than inventing your own.
+`.claude/prompts/playwright-test-*.md` and `.claude/prompts/playwright-flaky-*.md` files show the
+canonical prompt shape for each; follow that shape rather than inventing your own.
 
+- **Triager** — `Agent({subagent_type: "playwright-test-triager", prompt: "Triage the failing test(s) in <file/tag>...", ...})`.
+  Run this before the healer for anything not obviously "same scenario, stale mechanics" — see
+  `.claude/skills/failure-triage/SKILL.md`. Analysis only; it never edits code.
 - **Healer** — `Agent({subagent_type: "playwright-test-healer", prompt: "Run all tests and fix the failing ones.", ...})`,
   or scope it to specific files/tags when you already know what broke (faster, and avoids the healer
-  touching unrelated flaky tests in the same run).
+  touching unrelated flaky tests in the same run — flaky failures should go to the stabilizer below,
+  not the healer, since "heal" and "stabilize" verify differently).
+- **Flaky stabilizer** — `Agent({subagent_type: "playwright-flaky-stabilizer", prompt: "Stabilize <file> — it's been failing intermittently...", ...})`.
+  For tests the triager (or CI history) flagged as flaky — see `.claude/skills/flaky-tests/SKILL.md`.
+  Verifies with repeated runs, not one pass.
 - **Planner** — give it the task, the seed file (`tests/app/seed.spec.ts`), and where to save the
   plan (`specs/<name>.plan.md`). It reads existing coverage under `tests/app/` before writing new
   scenarios (see the addendum in its agent file) — don't skip that by planning from scratch yourself.
