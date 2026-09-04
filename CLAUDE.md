@@ -75,9 +75,9 @@ scripts/             one-off/CI scripts (setup-test-user, version checks)
 .mcp.json            Registers the Playwright test MCP server (agents' tools)
 ```
 
-## Plan → Generate → Heal agents
+## Plan → Generate → Heal → Triage → Stabilize agents
 
-Three Playwright-provided subagents, backed by the `playwright-test` MCP
+Five Playwright-provided subagents, backed by the `playwright-test` MCP
 server (`.mcp.json`), handle exploring the app and writing/fixing tests via
 real browser interaction rather than guessed selectors:
 
@@ -88,12 +88,20 @@ real browser interaction rather than guessed selectors:
   markup.
 - **`playwright-test-healer`** (`.claude/agents/playwright-test-healer.md`) — runs the suite,
   and for each failure, inspects the live app to find and fix the root cause.
+- **`playwright-test-triager`** (`.claude/agents/playwright-test-triager.md`) — analysis only,
+  no edits: classifies a failing test as flaky, a stale-test defect, or a real product
+  regression, with evidence, before anything else touches it.
+- **`playwright-flaky-stabilizer`** (`.claude/agents/playwright-flaky-stabilizer.md`) — fixes a
+  test's flakiness root cause (races, isolation, ordering) and verifies with repeated runs, not
+  one pass.
 
-All three have this repo's conventions appended to their agent files (Constitution imports,
+All five have this repo's conventions appended to their agent files (Constitution imports,
 fixtures, tagging, POM) — they don't just write generic Playwright. The enforcement hook covers
 the generator's file-writing tool the same as native Write/Edit (see
 `.claude/scripts/enforce_constitution.py`). **`.claude/skills/maintenance/SKILL.md` is the router**
 for when to reach for which agent — start there for "the app changed, make sure tests reflect it."
+`.claude/skills/failure-triage/SKILL.md` and `.claude/skills/flaky-tests/SKILL.md` cover the
+triager/stabilizer specifically.
 
 ## Skills index
 
@@ -106,6 +114,8 @@ for when to reach for which agent — start there for "the app changed, make sur
 - `.claude/skills/auth-storage-state/SKILL.md` — auth.setup.ts and resetStorageState
 - `.claude/skills/ai-native-workflow/SKILL.md` — how to approach non-trivial changes (confidence, unknowns, when to stop and ask)
 - `.claude/skills/maintenance/SKILL.md` — router for healing/extending tests after app changes; when to heal vs. plan+generate
+- `.claude/skills/failure-triage/SKILL.md` — classify a failing test as flaky, a test defect, or a product regression, with evidence
+- `.claude/skills/flaky-tests/SKILL.md` — find chronically-flaky tests via CI history and local reruns, fix the root cause
 - `.claude/skills/playwright-cli/SKILL.md` — drive a real browser from the command line to explore the app before writing selectors
 - `.claude/skills/playwright-trace/SKILL.md` — inspect `.zip` trace files from a failed run without opening a browser
 - `.claude/skills/pull-requests/SKILL.md` — pre-PR checklist mirroring CI, version-bump and commit/PR conventions

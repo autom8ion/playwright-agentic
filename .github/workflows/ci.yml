@@ -35,11 +35,29 @@ jobs:
             # Creates a fresh throwaway demoqa account for this run and writes it to env/.env.
             # For a real target app, replace this with a checkout of pre-provisioned CI secrets instead.
             - run: npm run setup:user
-            - run: npm run test:smoke
-            - run: npm run test:api
+            # A single invocation covering both tags, not two separate `playwright test`
+            # calls: Playwright clears outputDir (test-results/) at the start of every
+            # run, so `test:smoke` followed by `test:api` would silently drop smoke's
+            # results from junit.xml/ctrf-report.json before the api run's ones landed.
+            - run: npx playwright test --grep "@smoke|@api"
             - uses: actions/upload-artifact@v4
               if: always()
               with:
                   name: playwright-report
                   path: playwright-report/
+                  retention-days: 14
+            # Consumed by the KPI-Dashboard qa_collector (JUnit XML -> per-test pass/fail/duration).
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: junit-results
+                  path: test-results/junit.xml
+                  retention-days: 14
+            # Consumed by the KPI-Dashboard qa_collector (CTRF -> per-test pass/fail/
+            # duration/flaky, framework-agnostic).
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: ctrf-report
+                  path: ctrf/ctrf-report.json
                   retention-days: 14

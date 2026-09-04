@@ -57,15 +57,19 @@ scripts/              setup-test-user, version/skills-drift checks
 Start with `CLAUDE.md` for the rules and `AI-WORKFLOWS.md` for step-by-step
 playbooks (add a test, add a page object, add an API test, ...).
 
-Three Playwright-provided subagents (`.claude/agents/playwright-test-*.md`,
+Five Playwright-provided subagents (`.claude/agents/playwright-*.md`,
 via the `playwright-test` MCP server in `.mcp.json`) explore and write/fix
 tests against the real running app: a **planner** that scopes coverage into
 `specs/*.plan.md`, a **generator** that turns each scenario into a real spec
-file, and a **healer** that diagnoses and fixes failing tests. All three
-carry this repo's conventions, not generic Playwright output. For your own
-one-off exploration (not a full agent run), use `playwright-cli` directly —
-see the command table above. `.claude/skills/maintenance/SKILL.md` is the
-router for when to reach for which.
+file, a **healer** that diagnoses and fixes failing tests, a **triager** that
+classifies a failure as flaky/test-defect/product-regression before anything
+touches it, and a **flaky stabilizer** that fixes a test's nondeterminism and
+verifies with repeated runs. All five carry this repo's conventions, not
+generic Playwright output. For your own one-off exploration (not a full agent
+run), use `playwright-cli` directly — see the command table above.
+`.claude/skills/maintenance/SKILL.md` is the router for when to reach for
+which; `.claude/skills/failure-triage/SKILL.md` and
+`.claude/skills/flaky-tests/SKILL.md` cover the triager/stabilizer.
 
 ## Adapting this to a real app
 
