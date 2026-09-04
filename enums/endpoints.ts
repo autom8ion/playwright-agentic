@@ -17,4 +17,8 @@ export const Routes = {
     profile: '/profile',
     books: '/books',
     bookDetail: (isbn: string) => `/books?book=${isbn}`,
+    webTables: '/webtables',
+    practiceForm: '/automation-practice-form',
+    alerts: '/alerts',
+    accordion: '/accordian',
 } as const;
