@@ -37,6 +37,38 @@ A test that creates a book via `createdBook` and deletes only that book is
 **not** destructive — it owns its data end-to-end and is safe to run
 concurrently. Tag it by what it actually verifies (`@e2e`, `@smoke`, ...).
 
+## Locks for shared resources (Playwright 1.63+)
+
+`--workers 1` on `test:destructive` only serializes destructive tests
+against _each other_ within that one invocation — it does nothing if a
+destructive test and a non-destructive test that touch the same shared
+resource end up running concurrently (e.g. a bare `npx playwright test`
+with no tag filter, or two npm scripts run side by side). For that, declare
+a named `lock` on every test that mutates the same shared resource:
+
+```typescript
+test(
+    "should wipe every book from the user's collection",
+    { tag: '@destructive', lock: 'bookstore-collection' },
+    async ({ apiRequest, apiSession, createdBook }) => {
+        /* ... */
+    },
+);
+```
+
+Tests sharing a lock name never run at the same time — across files,
+workers, and projects — while everything else keeps running in parallel.
+`delete-all-books.api.spec.ts` and `add-book-to-collection.spec.ts` both
+carry `lock: 'bookstore-collection'` because they mutate the same shared
+demoqa test user's book collection (see `fixtures/pom/helper-fixture.ts`'s
+single `apiSession`), even though only one of them is tagged `@destructive`.
+
+Lock name by the resource being mutated, not by the test or tag. A test
+that only owns its own created-and-cleaned-up data (per the `@destructive`
+definition above) doesn't need a lock. `lock` still requires exactly one
+`tag` — it's an additional option on the same `test(...)` call, never a
+substitute for tagging.
+
 ## What the hook catches
 
 The enforcement hook blocks the literal string `'@functional'` (not a real

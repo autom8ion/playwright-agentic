@@ -8,9 +8,13 @@ import { UserWithBooksResponseSchema } from '../../../test-data/schemas/account-
 // the collection by fetching the user's current books and deleting each one
 // individually is the reliable path, and it's still a shared-state mutation
 // (not just the book this test's own fixture added) — hence @destructive.
+//
+// The 'bookstore-collection' lock is shared with add-book-to-collection.spec.ts:
+// both mutate the same shared test user's book collection, so they must never
+// run at the same time even though neither is single-worker on its own.
 test(
     "should wipe every book from the user's collection",
-    { tag: '@destructive' },
+    { tag: '@destructive', lock: 'bookstore-collection' },
     async ({ apiRequest, apiSession, createdBook }) => {
         await test.step('GIVEN at least one book in the collection', async () => {
             expect(createdBook.isbn).toBeTruthy();
