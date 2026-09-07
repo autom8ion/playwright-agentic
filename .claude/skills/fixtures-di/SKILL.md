@@ -23,7 +23,10 @@ test('...', { tag: '@smoke' }, async ({ loginPage, apiRequest, apiSession }) => 
 re-exports `test` (and `expect`) from a chain of `base.extend(...)` layers:
 
 ```
-page-object-fixture.ts   loginPage, bookStorePage, profilePage
+network-fixture.ts       context override — aborts ad/analytics requests (no auto; browser tests only)
+        │  base.extend
+        ▼
+page-object-fixture.ts   loginPage, bookStorePage, profilePage, webTablesPage, ...
         │  base.extend
         ▼
 api-request-fixture.ts   apiRequest<T>(options) — typed HTTP helper
@@ -38,6 +41,7 @@ test-options.ts          re-exports { test, expect } — import this, nothing el
 Each layer only depends on the layer(s) before it. When adding a new
 fixture, decide which layer it belongs to:
 
+- A request-level concern for every browser test (routing, headers) → `network-fixture.ts`.
 - A new page object → `page-object-fixture.ts`.
 - A new typed API wrapper → `api-request-fixture.ts`.
 - Something built from a page object _and_ the API (setup/teardown helpers,

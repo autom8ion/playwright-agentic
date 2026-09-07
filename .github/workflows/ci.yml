@@ -17,6 +17,7 @@ jobs:
             - run: npm ci
             - run: npm run check:version
             - run: npm run check:skills-drift
+            - run: npm run check:hook
             - run: npm run format:check
             - run: npm run lint
             - run: npm run typecheck

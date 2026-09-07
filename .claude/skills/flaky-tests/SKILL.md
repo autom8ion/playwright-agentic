@@ -31,6 +31,9 @@ gh run download <run-id> -n ctrf-report -D /tmp/ctrf-<run-id>
 
 # Aggregate: which tests were flaky in more than one recent run?
 jq -r '.results.tests[] | select(.flaky == true) | .name' /tmp/ctrf-*/ctrf-report.json | sort | uniq -c | sort -rn
+
+# Or the one-run digest in the same shape agents expect (FLAKY <file> :: <title> :: (passed on retry N))
+npm run test:summary -- --from-ctrf /tmp/ctrf-<run-id>/ctrf-report.json
 ```
 
 A test flaky in **2 or more** of the last ~20 runs is a chronic offender worth fixing — a single
@@ -68,8 +71,9 @@ success — don't accept "it passed once" as done, from the agent or from your o
 
 ## After stabilizing
 
-1. Re-run the target test with `--repeat-each` one more time yourself as a final check, plus the
-   relevant tier (`npm run test:smoke`, etc.) to confirm nothing else regressed.
+1. Re-run the target test with `--repeat-each` one more time yourself as a final check
+   (`npm run test:summary -- <file> --repeat-each=10`), plus the relevant tier to confirm nothing
+   else regressed.
 2. `npm run typecheck && npm run lint && npm run format:check` — same as any other agent-written
    change (see `.claude/skills/maintenance/SKILL.md`'s "After the agents run").
 3. If the stabilizer left a `test.fixme()` because it couldn't reach determinism, surface that

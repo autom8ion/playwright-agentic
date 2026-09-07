@@ -1,80 +1,57 @@
 ---
 name: maintenance
-description: Proactively react to application changes — heal broken tests and extend coverage for new/changed functionality using the Playwright plan/generate/heal agents.
+description: Proactively react to application changes — heal broken tests and extend coverage for new/changed functionality via the playwright-orchestrator and its leaf agents.
 ---
 
 # Test Maintenance
 
-This is the router for "the app changed, make sure tests still reflect it" — whether that's
-triggered explicitly ("heal the tests", "the checkout flow changed, update coverage"), noticed
-incidentally (a test fails during unrelated work), or run periodically. It orchestrates the three
-Playwright agents (`.claude/agents/playwright-test-*.md`, backed by the `playwright-test` MCP
-server declared in `.mcp.json`) rather than duplicating their logic — this skill is about **when**
-and **which** agent to reach for, not how each one works internally.
+The router for "the app changed, make sure tests still reflect it" — triggered explicitly,
+noticed incidentally, or run periodically. It orchestrates the Playwright agents
+(`.claude/agents/playwright-*.md`, backed by the `playwright-test` MCP server in `.mcp.json`);
+it does not duplicate their logic.
+
+## Start from a summary, not raw output
+
+```bash
+npm run test:summary -- <files or --grep @tag>     # or nothing for the non-destructive suite
+```
+
+One `PASS/FAIL/FLAKY` line plus one `FAIL <file> :: <title> :: <cause>` line per failure. That
+output is what you hand to agents; never paste full Playwright output into a prompt.
 
 ## Decision: heal vs. plan+generate
 
-Run the affected tests first (`npx playwright test <path> --grep-invert @destructive`, or the full
-`npm test` if you don't know what's affected) and classify each failure before doing anything:
+- **Same scenario, stale mechanics** (selector, label text, incidental value) → `/heal <file>`
+  with "failures are obviously stale mechanics" so triage is skipped.
+- **Scenario no longer exists** → don't heal it into testing nothing. Confirm with the user,
+  delete the test and any orphaned page-object locators.
+- **New/changed functionality, nothing failing** → `/coverage <what changed>`.
+- **Not obviously any of the above** → `/heal <file>` without the "obviously stale" note; the
+  orchestrator runs the triager first and routes FLAKY → stabilizer, TEST DEFECT → healer,
+  PRODUCT REGRESSION/AMBIGUOUS → report only. See `.claude/skills/failure-triage/SKILL.md`.
 
-- **Same scenario, different implementation detail** (a selector no longer resolves, a label's text
-  changed, timing shifted) → the scenario is still valid, only the test's mechanics are stale. Use
-  `playwright-test-healer`.
-- **The scenario itself no longer exists** (a flow was removed or replaced) → don't heal it into
-  something that doesn't test anything real. Confirm with the user, then delete the test (and any
-  page-object locators that now have no callers) rather than forcing it to pass.
-- **New or materially changed functionality with no failing test** (nothing failed, but a page or
-  flow changed enough that current coverage doesn't reflect it) → there's nothing to heal. Use
-  `playwright-test-planner` to scope what's new, then `playwright-test-generator` per scenario. This
-  is the "proactive" half — don't wait for a failure if you already know the app changed.
-- **Not obviously either of the above** (could be flaky, could be a real regression, not clearly a
-  stale test) → don't guess. Run `.claude/skills/failure-triage/SKILL.md` (`playwright-test-triager`
-  agent) first — it classifies the failure as flaky, a test defect, or a product regression with
-  evidence, then routes to `flaky-tests`, `playwright-test-healer`, or a human report respectively.
-  Healing a test into passing against a genuine bug hides the bug, and "fixing" a flaky test by
-  patching its symptom just moves the flake elsewhere — triage exists so neither happens by accident.
+A single maintenance pass often needs both: `/heal` for what broke, `/coverage` for what's new.
 
-A single maintenance pass often needs both: heal what broke, generate coverage for what's new.
+## Calling agents directly (when the orchestrator is overkill)
 
-## Running the agents
+One known-stale file, one flaky test, one triage question — call the leaf agent yourself:
 
-Each is a subagent (`Agent` tool, `subagent_type` = the agent's `name` in its frontmatter). Give it
-a self-contained prompt — it has no memory of this conversation. The generated
-`.claude/prompts/playwright-test-*.md` and `.claude/prompts/playwright-flaky-*.md` files show the
-canonical prompt shape for each; follow that shape rather than inventing your own.
+- `Agent({subagent_type: "playwright-test-triager", prompt: "Triage: <FAIL lines>"})`
+- `Agent({subagent_type: "playwright-test-healer", prompt: "Heal <file>: <FAIL lines>"})`
+- `Agent({subagent_type: "playwright-flaky-stabilizer", prompt: "Stabilize <file> — flaky in N of last 20 CI runs"})`
+- Planner: task + seed (`tests/app/seed.spec.ts`) + plan path (`specs/<name>.plan.md`).
+- Generator: **one call per suite** (`### N.` heading), sequential — the MCP browser is shared.
 
-- **Triager** — `Agent({subagent_type: "playwright-test-triager", prompt: "Triage the failing test(s) in <file/tag>...", ...})`.
-  Run this before the healer for anything not obviously "same scenario, stale mechanics" — see
-  `.claude/skills/failure-triage/SKILL.md`. Analysis only; it never edits code.
-- **Healer** — `Agent({subagent_type: "playwright-test-healer", prompt: "Run all tests and fix the failing ones.", ...})`,
-  or scope it to specific files/tags when you already know what broke (faster, and avoids the healer
-  touching unrelated flaky tests in the same run — flaky failures should go to the stabilizer below,
-  not the healer, since "heal" and "stabilize" verify differently).
-- **Flaky stabilizer** — `Agent({subagent_type: "playwright-flaky-stabilizer", prompt: "Stabilize <file> — it's been failing intermittently...", ...})`.
-  For tests the triager (or CI history) flagged as flaky — see `.claude/skills/flaky-tests/SKILL.md`.
-  Verifies with repeated runs, not one pass.
-- **Planner** — give it the task, the seed file (`tests/app/seed.spec.ts`), and where to save the
-  plan (`specs/<name>.plan.md`). It reads existing coverage under `tests/app/` before writing new
-  scenarios (see the addendum in its agent file) — don't skip that by planning from scratch yourself.
-- **Generator** — one call per scenario in the plan, sequential (not parallel — later scenarios may
-  build on earlier ones reusing the same page state). Point it at the plan file and the specific
-  bullet.
+Every leaf agent has the `agent-conventions` and `app-notes` skills preloaded and ends with a
+fixed ≤ 25-line report; you do not need to tell them to read `CLAUDE.md`.
 
 ## After the agents run
 
-1. Re-run the full non-destructive suite (`npm test`) plus `npm run test:destructive` if anything
-   touching shared state (BookStore collection mutations, account state) was healed or added —
-   don't assume the destructive tier is unaffected just because it wasn't in the failure list.
-2. `npm run typecheck && npm run lint && npm run format:check` — the agents write real TypeScript;
-   verify it the same way you would your own changes. The enforcement hook blocks the
-   mechanically-detectable violations at write-time (including from the generator's
-   `generator_write_test` MCP tool — see `.claude/scripts/enforce_constitution.py`), but hook
-   silence isn't proof of full Constitution compliance (e.g. "exactly one tag" isn't hook-enforced).
-   Skim generated/healed files against `.claude/skills/tagging/SKILL.md` and
-   `.claude/skills/page-objects/SKILL.md`.
-3. Check for any `test.fixme()` the healer left behind — that's the healer telling you it found a
-   likely **application** regression, not a stale test. Surface these explicitly; don't let them
-   silently sit skipped.
-4. Report what changed: tests healed (and why they broke), tests added (and what they now cover),
-   and anything marked `fixme` for human review. Follow the Golden Rule from
-   `.claude/skills/ai-native-workflow/SKILL.md` — verify before treating the pass as done.
+1. `npm run test:summary -- <touched files>`; plus `npm run test:destructive` if anything
+   touching the shared book collection changed.
+2. `npm run format && npm run typecheck && npm run lint && npm run check:skills-drift`. The
+   hooks (`.claude/settings.json`) already blocked banned patterns at write time and fed
+   eslint/tsc errors back to the agent; this is the final confirmation, not the first look.
+3. Surface any `test.fixme()` an agent left — that is "likely application regression, needs a
+   human", not a stale test.
+4. Report what changed and why, then let the user commit (Golden rule).

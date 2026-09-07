@@ -25,20 +25,22 @@ npm test                # full suite, excludes @destructive
 
 ## Common commands
 
-| Command                         | What it runs                                                                                     |
-| ------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `npm test`                      | everything except `@destructive`                                                                 |
-| `npm run test:smoke`            | `@smoke`-tagged tests only                                                                       |
-| `npm run test:api`              | `@api`-tagged tests only                                                                         |
-| `npm run test:e2e`              | `@e2e`-tagged tests only                                                                         |
-| `npm run test:destructive`      | `@destructive`-tagged tests, single worker                                                       |
-| `npm run test:ui`               | Playwright's interactive UI mode                                                                 |
-| `npm run test:headed`           | full suite with a visible browser                                                                |
-| `npm run explore -- open <url>` | drive a real browser from the CLI to check locators before writing them (`playwright-cli` skill) |
-| `npm run lint` / `lint:fix`     | ESLint (includes `eslint-plugin-playwright`)                                                     |
-| `npm run typecheck`             | `tsc --noEmit`                                                                                   |
-| `npm run check:version`         | VERSION / package.json / CHANGELOG.md agree                                                      |
-| `npm run check:skills-drift`    | CLAUDE.md's skills index matches `.claude/skills/`                                               |
+| Command                          | What it runs                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm test`                       | everything except `@destructive`                                                                 |
+| `npm run test:smoke`             | `@smoke`-tagged tests only                                                                       |
+| `npm run test:api`               | `@api`-tagged tests only                                                                         |
+| `npm run test:e2e`               | `@e2e`-tagged tests only                                                                         |
+| `npm run test:destructive`       | `@destructive`-tagged tests, single worker                                                       |
+| `npm run test:ui`                | Playwright's interactive UI mode                                                                 |
+| `npm run test:summary -- <args>` | run tests and print a ≤ 40-line digest (one line per failure) — what agents and reports consume  |
+| `npm run test:headed`            | full suite with a visible browser                                                                |
+| `npm run explore -- open <url>`  | drive a real browser from the CLI to check locators before writing them (`playwright-cli` skill) |
+| `npm run lint` / `lint:fix`      | ESLint (includes `eslint-plugin-playwright`)                                                     |
+| `npm run typecheck`              | `tsc --noEmit`                                                                                   |
+| `npm run check:version`          | VERSION / package.json / CHANGELOG.md agree                                                      |
+| `npm run check:skills-drift`     | CLAUDE.md's skills index matches `.claude/skills/`                                               |
+| `npm run check:hook`             | self-test of the Constitution enforcement hook                                                   |
 
 ## Layout
 
@@ -58,19 +60,21 @@ scripts/              setup-test-user, version/skills-drift checks
 Start with `CLAUDE.md` for the rules and `AI-WORKFLOWS.md` for step-by-step
 playbooks (add a test, add a page object, add an API test, ...).
 
-Five Playwright-provided subagents (`.claude/agents/playwright-*.md`,
-via the `playwright-test` MCP server in `.mcp.json`) explore and write/fix
-tests against the real running app: a **planner** that scopes coverage into
-`specs/*.plan.md`, a **generator** that turns each scenario into a real spec
-file, a **healer** that diagnoses and fixes failing tests, a **triager** that
-classifies a failure as flaky/test-defect/product-regression before anything
-touches it, and a **flaky stabilizer** that fixes a test's nondeterminism and
-verifies with repeated runs. All five carry this repo's conventions, not
-generic Playwright output. For your own one-off exploration (not a full agent
-run), use `playwright-cli` directly — see the command table above.
+Two slash commands drive the agentic workflow: **`/coverage <what to cover>`**
+(plan → generate → run → heal) and **`/heal [file|@tag]`** (summarize →
+triage → heal/stabilize). Each makes a single call to the
+`playwright-orchestrator` subagent, which coordinates five leaf agents
+(`.claude/agents/playwright-*.md`, via the `playwright-test` MCP server in
+`.mcp.json`) against the real running app — a **planner**, a per-suite
+**generator**, a **healer**, a **triager**, and a **flaky stabilizer** — and
+returns one short report. The leaf agents preload a compact conventions card
+and a file of verified app facts instead of re-reading the skills each run,
+are turn-capped, and are backed by three hooks (block banned patterns at
+write time, feed eslint/tsc errors back on the same turn, refuse to let a
+writer agent stop with a red typecheck). For your own one-off exploration,
+use `playwright-cli` directly — see the command table above.
 `.claude/skills/maintenance/SKILL.md` is the router for when to reach for
-which; `.claude/skills/failure-triage/SKILL.md` and
-`.claude/skills/flaky-tests/SKILL.md` cover the triager/stabilizer.
+which.
 
 ## Adapting this to a real app
 

@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from './network-fixture';
 import { LoginPage } from '../../pages/LoginPage';
 import { BookStorePage } from '../../pages/BookStorePage';
 import { ProfilePage } from '../../pages/ProfilePage';
@@ -6,6 +6,7 @@ import { WebTablesPage } from '../../pages/WebTablesPage';
 import { PracticeFormPage } from '../../pages/PracticeFormPage';
 import { AlertsPage } from '../../pages/AlertsPage';
 import { AccordionPage } from '../../pages/AccordionPage';
+import { ButtonsPage } from '../../pages/ButtonsPage';
 
 export type PageObjectFixtures = {
     loginPage: LoginPage;
@@ -15,6 +16,7 @@ export type PageObjectFixtures = {
     practiceFormPage: PracticeFormPage;
     alertsPage: AlertsPage;
     accordionPage: AccordionPage;
+    buttonsPage: ButtonsPage;
 };
 
 export const test = base.extend<PageObjectFixtures>({
@@ -38,5 +40,8 @@ export const test = base.extend<PageObjectFixtures>({
     },
     accordionPage: async ({ page }, use) => {
         await use(new AccordionPage(page));
+    },
+    buttonsPage: async ({ page }, use) => {
+        await use(new ButtonsPage(page));
     },
 });

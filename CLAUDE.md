@@ -15,7 +15,9 @@ next prompt. Don't stack multiple unverified changes.
 ## Commands
 
 See `README.md` for setup and the full command list; `npm run check:version` /
-`check:skills-drift` keep VERSION/CHANGELOG and the skills index honest.
+`check:skills-drift` / `check:hook` keep VERSION/CHANGELOG, the skills index, and the
+enforcement hook honest. `npm run test:summary -- <args>` runs tests and prints a ≤ 40-line
+digest — use it (not raw `npm test` output) whenever the result feeds an agent or a report.
 
 ## Non-negotiables
 
@@ -36,9 +38,10 @@ See `README.md` for setup and the full command list; `npm run check:version` /
    calls that read as GIVEN / WHEN / THEN (/ AND).
 6. **Exactly one tag per test.** One of `@smoke`, `@sanity`, `@regression`,
    `@e2e`, `@api`, `@destructive` — on the `test()` call, never on
-   `test.describe()`. `@destructive` is reserved for tests that mutate
-   shared state (not tests that create-and-clean-up only their own data) and
-   always runs with `--workers 1`. See `.claude/skills/tagging/SKILL.md`.
+   `test.describe()`. Hook-enforced on full-file writes, along with rule 5.
+   `@destructive` is reserved for tests that mutate shared state (not tests
+   that create-and-clean-up only their own data) and always runs with
+   `--workers 1`. See `.claude/skills/tagging/SKILL.md`.
 7. **API responses are validated with `z.strictObject()`**, never
    `z.object()` — unknown fields must fail the contract. See `.claude/skills/api-testing/SKILL.md`.
 8. **Test data is bifurcated.** Static boundary/invalid values live in
@@ -77,17 +80,20 @@ scripts/             one-off/CI scripts (setup-test-user, version checks)
 
 ## Plan → Generate → Heal → Triage → Stabilize agents
 
-Five Playwright-provided subagents, backed by the `playwright-test` MCP
-server (`.mcp.json`), handle exploring the app and writing/fixing tests via
-real browser interaction rather than guessed selectors:
+**Entry points: `/coverage <what to cover>` and `/heal [file|@tag]`** (skills). Each makes one
+`Agent` call to **`playwright-orchestrator`** (`.claude/agents/playwright-orchestrator.md`,
+sonnet), which runs the pipeline below and returns a ≤ 40-line report — the main session never
+hand-drives leaf agents or reads raw test output. Five leaf subagents, backed by the
+`playwright-test` MCP server (`.mcp.json`), explore the app and write/fix tests via real
+browser interaction rather than guessed selectors:
 
 - **`playwright-test-planner`** (`.claude/agents/playwright-test-planner.md`) — explores the
   live app from `tests/app/seed.spec.ts` and writes a scenario plan to `specs/*.plan.md`.
 - **`playwright-test-generator`** (`.claude/agents/playwright-test-generator.md`) — turns one
-  plan scenario at a time into a real spec file, driving the browser live rather than guessing
-  markup.
-- **`playwright-test-healer`** (`.claude/agents/playwright-test-healer.md`) — runs the suite,
-  and for each failure, inspects the live app to find and fix the root cause.
+  plan suite (every scenario under a `### N.` heading) into real spec files, driving the browser
+  live rather than guessing markup.
+- **`playwright-test-healer`** (`.claude/agents/playwright-test-healer.md`) — given a scoped
+  failure list, inspects the live app to find and fix each root cause at the page-object level.
 - **`playwright-test-triager`** (`.claude/agents/playwright-test-triager.md`) — analysis only,
   no edits: classifies a failing test as flaky, a stale-test defect, or a real product
   regression, with evidence, before anything else touches it.
@@ -95,11 +101,15 @@ real browser interaction rather than guessed selectors:
   test's flakiness root cause (races, isolation, ordering) and verifies with repeated runs, not
   one pass.
 
-All five have this repo's conventions appended to their agent files (Constitution imports,
-fixtures, tagging, POM) — they don't just write generic Playwright. The enforcement hook covers
-the generator's file-writing tool the same as native Write/Edit (see
-`.claude/scripts/enforce_constitution.py`). **`.claude/skills/maintenance/SKILL.md` is the router**
-for when to reach for which agent — start there for "the app changed, make sure tests reflect it."
+All leaf agents preload `.claude/skills/agent-conventions/SKILL.md` (the compact rule card)
+and `.claude/skills/app-notes/SKILL.md` (verified facts about the target app), are capped with
+`maxTurns`, cannot spawn agents, and end with a fixed short report — never tell them to "read
+CLAUDE.md first"; it is already in their context. The generator is called **once per plan
+suite**, not per scenario. Three hooks in `.claude/settings.json` back this up: PreToolUse
+(`enforce_constitution.py`, also covers the generator's MCP write tool), PostToolUse
+(`post_write_check.py` feeds eslint/tsc errors back on the turn a file is written), and
+SubagentStop (`subagent_stop_gate.py` won't let a writer agent finish with a red typecheck).
+**`.claude/skills/maintenance/SKILL.md` is the router** for when to reach for which;
 `.claude/skills/failure-triage/SKILL.md` and `.claude/skills/flaky-tests/SKILL.md` cover the
 triager/stabilizer specifically.
 
@@ -107,7 +117,7 @@ triager/stabilizer specifically.
 
 - `.claude/skills/page-objects/SKILL.md` — structure, locator sections, method conventions
 - `.claude/skills/locators-assertions/SKILL.md` — locator priority, web-first assertions, no hard waits
-- `.claude/skills/fixtures-di/SKILL.md` — the three-layer fixture chain and test-options.ts
+- `.claude/skills/fixtures-di/SKILL.md` — the four-layer fixture chain and test-options.ts
 - `.claude/skills/api-testing/SKILL.md` — apiRequest fixture, Zod strictObject schemas
 - `.claude/skills/data-strategy/SKILL.md` — static vs. factory test data
 - `.claude/skills/tagging/SKILL.md` — the six tags and what each means
@@ -119,6 +129,10 @@ triager/stabilizer specifically.
 - `.claude/skills/playwright-cli/SKILL.md` — drive a real browser from the command line to explore the app before writing selectors
 - `.claude/skills/playwright-trace/SKILL.md` — inspect `.zip` trace files from a failed run without opening a browser
 - `.claude/skills/pull-requests/SKILL.md` — pre-PR checklist mirroring CI, version-bump and commit/PR conventions
+- `.claude/skills/agent-conventions/SKILL.md` — compact rule card preloaded into every Playwright subagent (spec/page-object shape, tags, report format)
+- `.claude/skills/app-notes/SKILL.md` — verified facts and quirks about the target app so agents don't re-discover them live
+- `.claude/skills/coverage/SKILL.md` — `/coverage <what>`: one orchestrator call for plan → generate → run → heal
+- `.claude/skills/heal/SKILL.md` — `/heal [file|@tag]`: one orchestrator call for summarize → triage → heal/stabilize
 
 ## Confidence rule
 
