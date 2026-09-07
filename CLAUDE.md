@@ -80,10 +80,14 @@ scripts/             one-off/CI scripts (setup-test-user, version checks)
 
 ## Plan → Generate → Heal → Triage → Stabilize agents
 
-**Entry points: `/coverage <what to cover>` and `/heal [file|@tag]`** (skills). Each makes one
-`Agent` call to **`playwright-orchestrator`** (`.claude/agents/playwright-orchestrator.md`,
-sonnet), which runs the pipeline below and returns a ≤ 40-line report — the main session never
-hand-drives leaf agents or reads raw test output. Five leaf subagents, backed by the
+**Entry points: `/coverage <what to cover>`, `/heal [file|@tag]`, and `/maintain [what changed]`**
+(skills). The first two make one `Agent` call to **`playwright-orchestrator`**
+(`.claude/agents/playwright-orchestrator.md`, sonnet), which runs the pipeline below and returns
+a ≤ 40-line report; `/maintain` calls **`playwright-maintainer`**
+(`.claude/agents/playwright-maintainer.md`), which wraps the orchestrator in a full pass (both
+suite tiers, heal, optional coverage, audits for dead scenarios / orphaned locators / `fixme`s /
+chronic CI flakes) and never deletes anything itself. The main session never hand-drives leaf
+agents or reads raw test output. Five leaf subagents, backed by the
 `playwright-test` MCP server (`.mcp.json`), explore the app and write/fix tests via real
 browser interaction rather than guessed selectors:
 
@@ -133,6 +137,7 @@ triager/stabilizer specifically.
 - `.claude/skills/app-notes/SKILL.md` — verified facts and quirks about the target app so agents don't re-discover them live
 - `.claude/skills/coverage/SKILL.md` — `/coverage <what>`: one orchestrator call for plan → generate → run → heal
 - `.claude/skills/heal/SKILL.md` — `/heal [file|@tag]`: one orchestrator call for summarize → triage → heal/stabilize
+- `.claude/skills/maintain/SKILL.md` — `/maintain [what changed]`: one maintainer call for a full status → heal → coverage → audit pass
 
 ## Confidence rule
 

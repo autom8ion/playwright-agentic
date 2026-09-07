@@ -7,6 +7,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `/maintain` skill plus a `playwright-maintainer` subagent: a full proactive pass (both suite
+  tiers, heal via the orchestrator, coverage for described changes, audits for dead scenarios /
+  orphaned locators / leftover `fixme()`s / chronic CI flakes) that never deletes on its own.
 - `/coverage` and `/heal` skills plus a `playwright-orchestrator` subagent that runs the
   plan → generate → run → heal (or summarize → triage → heal/stabilize) pipeline and returns
   one short report, so the main session never hand-drives leaf agents.
