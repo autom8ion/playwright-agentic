@@ -31,6 +31,10 @@ output is what you hand to agents; never paste full Playwright output into a pro
   PRODUCT REGRESSION/AMBIGUOUS → report only. See `.claude/skills/failure-triage/SKILL.md`.
 
 A single maintenance pass often needs both: `/heal` for what broke, `/coverage` for what's new.
+**`/maintain [what changed]`** does the whole pass in one call via the `playwright-maintainer`
+agent (`.claude/agents/playwright-maintainer.md`): both suite tiers, heal, coverage for what you
+describe, and the audits below (delete candidates, orphaned page-object members, leftover
+`fixme()`s, chronic CI flakes) — reported for a human, never acted on.
 
 ## Calling agents directly (when the orchestrator is overkill)
 

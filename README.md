@@ -60,9 +60,12 @@ scripts/              setup-test-user, version/skills-drift checks
 Start with `CLAUDE.md` for the rules and `AI-WORKFLOWS.md` for step-by-step
 playbooks (add a test, add a page object, add an API test, ...).
 
-Two slash commands drive the agentic workflow: **`/coverage <what to cover>`**
-(plan → generate → run → heal) and **`/heal [file|@tag]`** (summarize →
-triage → heal/stabilize). Each makes a single call to the
+Three slash commands drive the agentic workflow: **`/coverage <what to cover>`**
+(plan → generate → run → heal), **`/heal [file|@tag]`** (summarize →
+triage → heal/stabilize), and **`/maintain [what changed]`** (a full pass:
+both suite tiers, heal, coverage, and audits for dead scenarios, orphaned
+locators, leftover `fixme()`s, and chronic CI flakes, via the
+`playwright-maintainer` subagent). The first two make a single call to the
 `playwright-orchestrator` subagent, which coordinates five leaf agents
 (`.claude/agents/playwright-*.md`, via the `playwright-test` MCP server in
 `.mcp.json`) against the real running app — a **planner**, a per-suite

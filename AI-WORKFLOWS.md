@@ -75,6 +75,17 @@ One call to the `playwright-orchestrator` subagent: planner → generator (once 
 `npm run test:summary` → scoped heal if needed → format/typecheck/lint. You get a ≤ 40-line
 report; review `git diff`, run anything you want to double-check, commit.
 
+## Full maintenance pass (periodic / after a release)
+
+```
+/maintain checkout flow was redesigned; coupon field removed
+```
+
+One call to `playwright-maintainer`: runs both suite tiers, heals via the orchestrator, adds
+coverage for what you described, and reports delete candidates, orphaned page-object members,
+leftover `fixme()`s, and chronic CI flakes. It never deletes — read those sections first and
+decide.
+
 ## React to an application change (proactive maintenance)
 
 The target app changed and tests need to catch up — whether something already failed or not.
