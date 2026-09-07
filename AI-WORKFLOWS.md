@@ -65,25 +65,30 @@ call; `test-options.ts` doesn't change unless you're adding a new re-export.
    change" below); it will drive the real browser to diagnose each failure
    rather than guessing from the stack trace alone.
 
+## Add coverage for a feature or page (agentic)
+
+```
+/coverage demoqa Elements > Buttons page: click, double-click, right-click
+```
+
+One call to the `playwright-orchestrator` subagent: planner → generator (once per suite) →
+`npm run test:summary` → scoped heal if needed → format/typecheck/lint. You get a ≤ 40-line
+report; review `git diff`, run anything you want to double-check, commit.
+
 ## React to an application change (proactive maintenance)
 
-The target app changed (a flow was reworked, a page redesigned, a feature
-added) and tests need to catch up — whether something already failed or
-not. Start with `.claude/skills/maintenance/SKILL.md`; short version:
+The target app changed and tests need to catch up — whether something already failed or not.
+Start with `.claude/skills/maintenance/SKILL.md`; short version:
 
-1. Run the affected tests (or the full suite if you're not sure what's
-   affected) and classify each failure: stale test mechanics (heal it) vs.
-   scenario no longer exists (delete it, don't force it green) vs.
-   ambiguous/possible regression (stop and ask — don't heal over a real bug).
-2. Failures with a clear stale-selector/assertion cause → the
-   `playwright-test-healer` agent (`.claude/agents/playwright-test-healer.md`).
-3. New/changed functionality with no failing test to anchor on → the
-   `playwright-test-planner` agent to scope scenarios into `specs/*.plan.md`,
-   then `playwright-test-generator` per scenario.
-4. Re-run the full suite (including `npm run test:destructive` if anything
-   touching shared state was touched), typecheck/lint/format, and check for
-   any `test.fixme()` the healer left — that means it found a likely
-   **application** regression, not a stale test, and it needs a human look.
+1. `npm run test:summary -- <files or --grep @tag>` — one line per failure, not a wall of
+   stack traces. Classify: stale mechanics vs. scenario gone (delete it) vs. unclear.
+2. Stale mechanics → `/heal <file>` and say "obviously stale" so triage is skipped. Unclear →
+   `/heal <file>`; the orchestrator triages first and only heals TEST DEFECT verdicts, sends
+   FLAKY to the stabilizer, and reports PRODUCT REGRESSION / AMBIGUOUS untouched.
+3. New/changed functionality with nothing failing → `/coverage <what changed>`.
+4. Read the report's "Needs a human" section first — a `test.fixme()` or a PRODUCT REGRESSION
+   verdict is the finding. Then `git diff`, `npm run test:destructive` if shared state was
+   touched, commit.
 
 ## Release a version bump
 

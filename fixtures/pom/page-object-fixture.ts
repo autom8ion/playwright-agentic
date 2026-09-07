@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from './network-fixture';
 import { LoginPage } from '../../pages/LoginPage';
 import { BookStorePage } from '../../pages/BookStorePage';
 import { ProfilePage } from '../../pages/ProfilePage';

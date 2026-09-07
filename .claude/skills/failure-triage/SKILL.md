@@ -29,9 +29,9 @@ Agent({
 })
 ```
 
-Give it the specific file(s)/tag that failed (from your own `npm test` or `test_run` output) rather
-than the whole suite — triage is per-failure, and scoping it avoids the agent re-discovering what
-already failed.
+Give it the `FAIL <file> :: <title> :: <cause>` lines from `npm run test:summary -- <scope>`
+rather than the whole suite — triage is per-failure, and scoping it avoids the agent re-discovering
+what already failed. `/heal <scope>` does this routing for you via the orchestrator.
 
 ## The protocol (what the triager does)
 
@@ -67,4 +67,5 @@ Route each verdict:
 
 The triager has no `Edit`/`Write`/`MultiEdit` tools by design — it classifies, it doesn't fix. If a
 report reads like it's proposing a code change, that's a sign the agent has drifted from its role;
-route the actual fix through the healer or stabilizer instead.
+route the actual fix through the healer or stabilizer instead. It has `agent-conventions`,
+`app-notes`, and this skill preloaded, so its prompt only needs the failure lines.

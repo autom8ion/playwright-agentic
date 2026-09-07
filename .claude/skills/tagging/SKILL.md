@@ -73,6 +73,8 @@ substitute for tagging.
 
 The enforcement hook blocks the literal string `'@functional'` (not a real
 tag — the `tests/app/functional/` folder already implies it) and blocks passing
-`tag:` to `test.describe(...)`. It does **not** verify "exactly one tag" —
-that's a code-review-time rule, not mechanically cheap to check on a partial
-edit.
+`tag:` to `test.describe(...)`. On **full-file writes** (Write and the
+generator's MCP write tool) it also requires at least one `tag:` per `test(`
+call, rejects `tag: [...]` arrays, and requires a `test.step('GIVEN|WHEN|THEN…')`.
+Partial `Edit`s can't be judged that way, so "exactly one tag" stays a
+review-time rule there. Self-test: `npm run check:hook`.

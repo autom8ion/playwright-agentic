@@ -1,4 +1,22 @@
 {
+    "permissions": {
+        "allow": [
+            "Bash(npm test)",
+            "Bash(npm test *)",
+            "Bash(npm run *)",
+            "Bash(npx playwright test *)",
+            "Bash(npx playwright cli *)",
+            "Bash(npx playwright trace *)",
+            "Bash(npx tsc *)",
+            "Bash(npx eslint *)",
+            "Bash(npx prettier *)",
+            "Bash(node scripts/*)",
+            "Bash(python3 .claude/scripts/*)",
+            "Bash(git status *)",
+            "Bash(git diff *)",
+            "Bash(git log *)"
+        ]
+    },
     "hooks": {
         "PreToolUse": [
             {
@@ -7,6 +25,30 @@
                     {
                         "type": "command",
                         "command": "python3 .claude/scripts/enforce_constitution.py"
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit|MultiEdit|mcp__playwright-test__generator_write_test",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 .claude/scripts/post_write_check.py",
+                        "timeout": 180
+                    }
+                ]
+            }
+        ],
+        "SubagentStop": [
+            {
+                "matcher": "playwright-test-generator|playwright-test-healer|playwright-flaky-stabilizer",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 .claude/scripts/subagent_stop_gate.py",
+                        "timeout": 240
                     }
                 ]
             }
