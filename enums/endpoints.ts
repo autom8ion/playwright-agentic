@@ -21,4 +21,5 @@ export const Routes = {
     practiceForm: '/automation-practice-form',
     alerts: '/alerts',
     accordion: '/accordian',
+    buttons: '/buttons',
 } as const;

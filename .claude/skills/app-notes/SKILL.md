@@ -55,3 +55,11 @@ healers append new facts under the right heading (keep each to one line, dated).
 
 - Three `heading > button` sections; single-open behavior (expanding one collapses the other).
 - Assert state via `aria-expanded` on the button plus visibility of the section's paragraph.
+
+## Buttons (`/buttons`)
+
+- Three buttons: "Double Click Me", "Right Click Me", "Click Me". The third has a random DOM id
+  regenerated on every load — locate by name, and use `exact: true` (default substring match on
+  "Click Me" also hits the other two).
+- Messages are plain `<p>`s, independent and non-exclusive: "You have done a double click" /
+  "You have done a right click" / "You have done a dynamic click". No login required.
