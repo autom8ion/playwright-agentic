@@ -3,6 +3,7 @@
 // test. Built for agents: a 20-test failing run is ~20 lines here instead of thousands.
 //
 //   npm run test:summary -- <any playwright test args>      run, then summarize
+//   (no --grep/--grep-invert given → @destructive is excluded, same as `npm test`)
 //   npm run test:summary -- --from-json test-results/last-run.json
 //   npm run test:summary -- --from-ctrf ctrf/ctrf-report.json
 //
@@ -32,7 +33,11 @@ if (fromIdx >= 0) {
     }
 } else {
     mkdirSync('test-results', { recursive: true });
-    const run = spawnSync('npx', ['playwright', 'test', ...args, '--reporter=json'], {
+    // Mirror `npm test`: unless the caller filtered explicitly, keep @destructive out — it
+    // mutates the shared demoqa collection and belongs in `npm run test:destructive`.
+    const filtered = args.some((a) => a.startsWith('--grep') || a === '-g');
+    const runArgs = filtered ? args : [...args, '--grep-invert', '@destructive'];
+    const run = spawnSync('npx', ['playwright', 'test', ...runArgs, '--reporter=json'], {
         stdio: ['inherit', 'ignore', 'inherit'],
         env: { ...process.env, PLAYWRIGHT_JSON_OUTPUT_NAME: JSON_OUT },
     });

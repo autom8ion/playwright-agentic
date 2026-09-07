@@ -23,6 +23,12 @@ healers append new facts under the right heading (keep each to one line, dated).
 - The whole suite shares one demoqa user (`.auth/app/apiSession.json`). Anything mutating that
   user's collection needs `lock: 'bookstore-collection'`.
 - Profile delete control is a bare element with no role; `ProfilePage.deleteButton` is a CSS id.
+- UI login runs `POST /Account/v1/GenerateToken` then `POST /Account/v1/Login` sequentially,
+  showing "Loading…" on `/login` until the SPA navigates to `/profile`; that chain can exceed
+  the 5 s expect timeout, so `auth.setup.ts` gives the URL assertion 15 s headroom.
+- One live session per account: parallel logins of the same UI account (e.g. `--repeat-each`
+  on the setup project with multiple workers) yield spurious "Invalid username or password!".
+  Verify auth changes with `--workers=1`.
 
 ## Web Tables (`/webtables`)
 
