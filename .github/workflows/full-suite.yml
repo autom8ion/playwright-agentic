@@ -1,0 +1,119 @@
+name: Full Suite
+
+# Runs the whole suite — every tag, including @destructive — and publishes a
+# single merged Playwright HTML report as a build artifact.
+#
+# This is deliberately separate from the PR-gating `CI` workflow
+# (.github/workflows/ci.yml), which only runs @smoke + @api so pull requests
+# stay fast (see .claude/skills/pull-requests/SKILL.md). Use this one as a
+# scheduled full-regression pass, or trigger it by hand before a release.
+#
+# @destructive tests must run with --workers 1 (CLAUDE.md rule 6), so they
+# can't share a single `playwright test` invocation with the rest of the
+# suite, which runs in parallel (see `workers` in playwright.config.ts). Each
+# tier runs as its own job against its own throwaway test account, writing a
+# Playwright "blob" report instead of the usual html/junit/ctrf reporters;
+# a final job downloads both blobs and merges them into one HTML report —
+# the standard Playwright pattern for combining differently-configured runs.
+# See https://playwright.dev/docs/test-sharding#merging-reports-from-multiple-shards
+#
+# Note: passing --reporter=blob overrides the html/junit/ctrf reporters
+# configured in playwright.config.ts for these runs, so this pipeline does
+# not produce junit.xml / ctrf-report.json — it's scoped to the merged HTML
+# report only. If you also want KPI-dashboard ingestion from a full-suite
+# run, that's a separate follow-up (e.g. running junit/ctrf alongside blob).
+
+on:
+    schedule:
+        - cron: '0 5 * * *' # nightly at 05:00 UTC — adjust to taste
+    workflow_dispatch:
+
+jobs:
+    lint-and-typecheck:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+            - run: npm ci
+            - run: npm run check:version
+            - run: npm run check:skills-drift
+            - run: npm run check:hook
+            - run: npm run format:check
+            - run: npm run lint
+            - run: npm run typecheck
+
+    test-parallel:
+        name: Test (everything except @destructive)
+        runs-on: ubuntu-latest
+        needs: lint-and-typecheck
+        env:
+            PLAYWRIGHT_BLOB_OUTPUT_FILE: blob-report/parallel.zip
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+            - run: npm ci
+            - run: npx playwright install --with-deps chromium
+            # Its own throwaway account, isolated from test-destructive's account below —
+            # the two jobs run concurrently and must not share mutable app state.
+            - run: npm run setup:user
+            - run: npm test -- --reporter=blob
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: blob-report-parallel
+                  path: blob-report/
+                  retention-days: 1
+
+    test-destructive:
+        name: Test (@destructive, --workers 1)
+        runs-on: ubuntu-latest
+        needs: lint-and-typecheck
+        env:
+            PLAYWRIGHT_BLOB_OUTPUT_FILE: blob-report/destructive.zip
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+            - run: npm ci
+            - run: npx playwright install --with-deps chromium
+            - run: npm run setup:user
+            - run: npm run test:destructive -- --reporter=blob
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: blob-report-destructive
+                  path: blob-report/
+                  retention-days: 1
+
+    merge-and-report:
+        name: Merge into one HTML report
+        runs-on: ubuntu-latest
+        needs: [test-parallel, test-destructive]
+        if: always() # publish the report even when a test job failed — that's the point of it
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+            - run: npm ci
+            - uses: actions/download-artifact@v4
+              with:
+                  pattern: blob-report-*
+                  path: blob-report
+                  merge-multiple: true
+            - run: npx playwright merge-reports --reporter html ./blob-report
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 14
