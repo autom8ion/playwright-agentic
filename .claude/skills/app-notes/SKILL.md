@@ -35,7 +35,11 @@ healers append new facts under the right heading (keep each to one line, dated).
 - Add modal fields: textboxes "First Name", "Last Name", "name@example.com", "Age", "Salary",
   "Department"; button "Submit". Modal is the only `role=dialog` (no accessible name).
 - Rows: `getByRole('row').filter({ hasText })`. Edit/Delete are `<span title="Edit|Delete">`
-  with no role → `row.getByTitle('Edit')`.
+  with no role → `row.getByTitle('Edit')`. Their computed accessible role is unstable across
+  Playwright's two snapshot mechanisms (`generic "Edit"`/`generic "Delete"` in a CLI/MCP
+  snapshot vs. a single `cell "EditDelete": - img - img` from `locator.ariaSnapshot()`) — don't
+  assert on that cell in an aria snapshot; list only the 6 data cells (unlisted trailing
+  siblings are unconstrained, see `webtables-aria-snapshot.spec.ts`).
 - Search box `getByPlaceholder('Type to search')` filters client-side as you type.
 - Seeded rows: Cierra Vega, Alden Cantrell, Kierra Gentry (ids 1–3; ids not shown in UI).
 

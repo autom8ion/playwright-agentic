@@ -99,8 +99,9 @@ browser interaction rather than guessed selectors:
 - **`playwright-test-healer`** (`.claude/agents/playwright-test-healer.md`) — given a scoped
   failure list, inspects the live app to find and fix each root cause at the page-object level.
 - **`playwright-test-triager`** (`.claude/agents/playwright-test-triager.md`) — analysis only,
-  no edits: classifies a failing test as flaky, a stale-test defect, or a real product
-  regression, with evidence, before anything else touches it.
+  no edits: classifies a failing test as flaky, a stale-test defect, a real product regression,
+  or a handful of narrower causes (auth/session, environment/config, CI infra), with evidence,
+  before anything else touches it.
 - **`playwright-flaky-stabilizer`** (`.claude/agents/playwright-flaky-stabilizer.md`) — fixes a
   test's flakiness root cause (races, isolation, ordering) and verifies with repeated runs, not
   one pass.

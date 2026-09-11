@@ -7,7 +7,9 @@ description: /heal [file | @tag] — fix failing Playwright tests by delegating 
 
 Fixes failures without hand-driving agents from this session. The orchestrator runs
 `npm run test:summary` on the scope, triages anything not obviously stale, sends TEST DEFECT
-verdicts to the healer and FLAKY ones to the stabilizer, leaves PRODUCT REGRESSION / AMBIGUOUS
+verdicts to the healer and FLAKY ones to the stabilizer, regenerates the shared auth session
+itself for an AUTH SESSION EXPIRED verdict (including the systemic check it runs before triage
+even starts), leaves PRODUCT REGRESSION / ENV CONFIG FAILURE / CI INFRA FAILURE / AMBIGUOUS
 untouched, and re-runs the summary plus repo checks.
 
 ## Do exactly this
@@ -22,8 +24,9 @@ untouched, and re-runs the summary plus repo checks.
     })
     ```
 
-2. Relay the final report as-is. Anything under "Needs a human" (a PRODUCT REGRESSION verdict,
-   a `fixme` left behind, AMBIGUOUS) goes first — those are the findings, not the green tests.
+2. Relay the final report as-is. Anything under "Needs a human" (a PRODUCT REGRESSION, ENV
+   CONFIG FAILURE, or CI INFRA FAILURE verdict, a `fixme` left behind, AMBIGUOUS) goes first —
+   those are the findings, not the green tests.
 3. Stop. The user reviews `git diff` and commits.
 
 Scope tightly when you can (a file, a tag): triage is per failure, and a full-suite run against

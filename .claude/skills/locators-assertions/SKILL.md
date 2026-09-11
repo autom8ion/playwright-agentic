@@ -38,3 +38,22 @@ harder to review than the alternatives above.
   "network went quiet," not for the thing your test actually needs.
 - Assertions belong in the test (inside a `test.step`), not inside a page
   object method.
+
+## Aria snapshots
+
+`toMatchAriaSnapshot()` is also a web-first assertion — it auto-retries the same as
+`toHaveText`/`toBeVisible` — and is worth reaching for when a scenario is really checking a
+whole region's structure at once (e.g. "these N items, in this order, with this state") rather
+than one element's text. It replaces a run of narrower assertions with a single call; see
+`accordion-aria-snapshot.spec.ts` (a container's full structure + ARIA boolean state) and
+`webtables-aria-snapshot.spec.ts` (one dynamically-added row, values interpolated into the
+template) for worked examples. Two behaviors that are easy to get wrong:
+
+- **Unlisted nodes are unconstrained, not asserted absent** — a descendant you don't list (e.g.
+  a paragraph under a heading) or a trailing sibling you don't list (e.g. a table row's last
+  cell) is simply not checked, not required to be missing. This is useful for trimming a
+  snapshot down to the part a scenario actually cares about, but it also means leaving something
+  out **doesn't** verify it isn't there.
+- **Boolean ARIA state must be written explicitly to be checked.** A button with no `[expanded]`
+  annotation in the template matches whether the real button is expanded or not. To actually
+  assert "collapsed," write `[expanded=false]` — omitting the attribute is not equivalent.

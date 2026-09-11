@@ -54,8 +54,11 @@ The `playwright-flaky-stabilizer` agent works through root causes in this order 
 is in its agent file, repeated here so you can sanity-check its report:
 
 1. **Race / missing web-first wait** — see `.claude/skills/locators-assertions/SKILL.md`.
-2. **Shared/leaking state** — a test mutating data another concurrent test depends on without being
-   tagged `@destructive` (`.claude/skills/tagging/SKILL.md`).
+2. **Shared/leaking state** — a test mutating a shared resource (the bookstore collection,
+   `apiSession`, a shared factory record) without a matching `lock:` option
+   (`.claude/skills/tagging/SKILL.md`) or its own factory-generated data. Two tests racing on the
+   same resource is the most common and easiest-to-spot flaky root cause — look for it first
+   after ruling out a missing wait.
 3. **Order dependence** — assuming state left by another test instead of owning its own
    factory-generated data (`.claude/skills/data-strategy/SKILL.md`).
 4. **Auth/session races under `fullyParallel`** — a test invalidating shared storage state another

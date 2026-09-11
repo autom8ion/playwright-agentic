@@ -28,7 +28,10 @@ output is what you hand to agents; never paste full Playwright output into a pro
 - **New/changed functionality, nothing failing** → `/coverage <what changed>`.
 - **Not obviously any of the above** → `/heal <file>` without the "obviously stale" note; the
   orchestrator runs the triager first and routes FLAKY → stabilizer, TEST DEFECT → healer,
-  PRODUCT REGRESSION/AMBIGUOUS → report only. See `.claude/skills/failure-triage/SKILL.md`.
+  PRODUCT REGRESSION/ENV CONFIG FAILURE/CI INFRA FAILURE/AMBIGUOUS → report only (the
+  orchestrator also screens for a broken shared auth session before triaging per test, and
+  fixes that itself rather than routing individual tests to the healer/stabilizer). See
+  `.claude/skills/failure-triage/SKILL.md`.
 
 A single maintenance pass often needs both: `/heal` for what broke, `/coverage` for what's new.
 **`/maintain [what changed]`** does the whole pass in one call via the `playwright-maintainer`
@@ -56,6 +59,7 @@ fixed ≤ 25-line report; you do not need to tell them to read `CLAUDE.md`.
 2. `npm run format && npm run typecheck && npm run lint && npm run check:skills-drift`. The
    hooks (`.claude/settings.json`) already blocked banned patterns at write time and fed
    eslint/tsc errors back to the agent; this is the final confirmation, not the first look.
-3. Surface any `test.fixme()` an agent left — that is "likely application regression, needs a
-   human", not a stale test.
+3. Surface any `test.fixme()` an agent left, and anything the orchestrator reported under
+   "Needs a human" — PRODUCT REGRESSION, ENV CONFIG FAILURE, and CI INFRA FAILURE are all
+   report-only by design, not just PRODUCT REGRESSION.
 4. Report what changed and why, then let the user commit (Golden rule).
