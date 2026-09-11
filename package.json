@@ -12,6 +12,7 @@
         "test:api": "playwright test --grep @api",
         "test:e2e": "playwright test --grep @e2e",
         "test:destructive": "playwright test --grep @destructive --workers 1",
+        "test:lighthouse": "playwright test --project=lighthouse",
         "test:headed": "playwright test --headed --grep-invert @destructive",
         "test:ui": "playwright test --ui",
         "test:summary": "node scripts/test-summary.js",
@@ -44,7 +45,9 @@
         "eslint-plugin-playwright": "^2.0.0",
         "globals": "^15.12.0",
         "husky": "^9.1.7",
+        "lighthouse": "^13.4.1",
         "playwright-ctrf-json-reporter": "^0.0.29",
+        "playwright-lighthouse": "^4.0.0",
         "prettier": "^3.3.3",
         "tsx": "^4.19.2",
         "typescript": "^5.7.2"

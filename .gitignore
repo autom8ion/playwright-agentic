@@ -153,3 +153,6 @@ vite.config.ts.timestamp-*
 .playwright-mcp/
 .playwright/
 
+# Lighthouse audit reports (see helpers/lighthouse.ts, .github/workflows/lighthouse.yml)
+/lighthouse-report/
+

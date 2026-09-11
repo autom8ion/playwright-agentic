@@ -1,0 +1,58 @@
+name: Lighthouse
+
+# Runs only the Lighthouse audit specs (tests/app/lighthouse/*.spec.ts) against multiple
+# pages of the app and persists the generated HTML + JSON reports as a build artifact.
+#
+# Deliberately separate from CI (.github/workflows/ci.yml) and Full Suite
+# (.github/workflows/full-suite.yml): Lighthouse audits are slower than a normal Playwright
+# test (each one runs a full page audit, not just a DOM assertion) and the `lighthouse`
+# Playwright project (see playwright.config.ts) pins `workers: 1` — a fixed CDP debugging
+# port can't be shared by two browser instances at once — so this pipeline doesn't scale
+# the same way the rest of the suite does. Keeping it out of the PR-gating `CI` workflow
+# means routine PRs stay fast; it still runs automatically for changes that plausibly
+# affect it, on a nightly schedule, and on demand.
+
+on:
+    schedule:
+        - cron: '0 6 * * *' # nightly at 06:00 UTC, offset from full-suite.yml's 05:00 slot
+    workflow_dispatch:
+    pull_request:
+        paths:
+            - 'tests/app/lighthouse/**'
+            - 'helpers/lighthouse.ts'
+            - 'fixtures/pom/helper-fixture.ts'
+            - 'playwright.config.ts'
+            - 'package.json'
+            - 'package-lock.json'
+            - '.github/workflows/lighthouse.yml'
+
+jobs:
+    lighthouse:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+            - run: npm ci
+            - run: npx playwright install --with-deps chromium
+            - run: npm run setup:user
+            - run: npm run test:lighthouse
+            # The per-page HTML/JSON audits written by helpers/lighthouse.ts — the primary
+            # artifact of this pipeline, kept long enough to compare a handful of past runs.
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: lighthouse-report
+                  path: lighthouse-report/
+                  retention-days: 30
+            # The Playwright run's own report (pass/fail per page, no trace/video — disabled
+            # for this project in playwright.config.ts since they'd fight Lighthouse's own
+            # CDP connection to the same browser).
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 14
