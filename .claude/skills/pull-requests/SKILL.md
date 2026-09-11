@@ -36,6 +36,22 @@ messages explain _why_, not a restatement of the diff (see recent history
 with `git log`). Branch off `main`; there's no enforced naming scheme beyond
 that.
 
+## Code review before opening
+
+The checklist above is entirely mechanical (lint/typecheck/format/version
+agreement, same as the constitution hooks catch at write time) — none of it
+reads the diff for an actual logic bug, a missed edge case, or code that
+could be simpler. Once the checklist is green, run `/code-review` on the
+branch to catch what the mechanical gates structurally can't. Pick an effort
+level for the size of the change (a small fix doesn't need `high`; a new
+page object or a pipeline change like the healer/orchestrator work
+benefits from it); omit the level to reuse whatever you last used. `--fix`
+applies straightforward findings directly, but re-run the checklist above
+afterward since a fix can touch formatting, a test, or a locator again.
+This is a step you run yourself before opening/updating the PR — it isn't
+wired into CI, matching this repo's preference for human-triggered review
+over automatic/unattended steps.
+
 ## Opening/updating the PR
 
 Pushing a branch and opening a PR are visible-to-others actions — confirm
