@@ -9,6 +9,13 @@ export class AccordionPage {
         return this.page.getByRole('button', { name });
     }
 
+    // The widget wrapper (`.accordion`) carries no accessible role/label of its own — only the
+    // three header buttons underneath do — so its stable CSS id/class pairing is the last-resort
+    // scope for an aria snapshot of the whole widget at once (see accordion-aria-snapshot.spec.ts).
+    get container(): Locator {
+        return this.page.locator('#accordianContainer .accordion');
+    }
+
     // --- Feedback / validation message locators ---
     // Each section's body text lives in a `.accordion-body` div beneath its header, inside a
     // shared `.accordion-item` wrapper. Neither wrapper nor body div carries an accessible
