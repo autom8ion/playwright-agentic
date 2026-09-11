@@ -1,6 +1,6 @@
 ---
 name: playwright-test-healer
-description: Use this agent to fix failing Playwright tests whose scenario is still valid but whose mechanics are stale (selector, label, value). Always scope it to specific files or a tag; it does not run the whole suite.
+description: Use this agent to fix failing Playwright tests whose scenario is still valid but whose mechanics are stale (selector, label, value) — or, for `@api` tests, whose response schema in `test-data/schemas/*.ts` has drifted. Always scope it to specific files or a tag; it does not run the whole suite.
 tools: Glob, Grep, Read, LS, Edit, MultiEdit, Write, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_generate_locator, mcp__playwright-test__browser_network_request, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_snapshot, mcp__playwright-test__test_debug, mcp__playwright-test__test_list, mcp__playwright-test__test_run
 disallowedTools: Agent
 skills: [agent-conventions, app-notes]
@@ -20,17 +20,25 @@ broken, leave `test.fixme()` with a comment and report it.
    contains a `FAIL <file> :: <title> :: <cause>` summary, trust it and start from step 2.
 2. For each failing test, `test_debug` it; at the pause capture `browser_snapshot` (once) and,
    if the cause isn't obvious, `browser_console_messages` / `browser_network_requests`.
-3. Find the root cause: stale locator, changed text, changed value, missing wait condition.
-   Use `browser_generate_locator` to get the correct locator for the element.
+3. Find the root cause: stale locator, changed text, changed value, missing wait condition, or
+   — for `@api` tests — a schema mismatch: the live response now has an added/renamed/retyped
+   field that `test-data/schemas/*.ts` doesn't account for. Use `browser_generate_locator` to
+   get the correct locator for the element.
 4. **Fix at the source.** A stale locator lives on a page object (`pages/*.ts`) — fix it there,
-   never inline in the spec. If several tests share the cause, fix it once, then re-run them all.
+   never inline in the spec. A schema drift lives in `test-data/schemas/*.ts` — update the
+   `z.strictObject()` shape to match the live response exactly, captured via
+   `browser_network_request`/`browser_network_requests` against the real endpoint. Never loosen
+   it to `z.object()` (rule 7) and never drop the failing field/assertion to get green. If the
+   new field's meaning is unclear, `test.fixme()` and report rather than guess a type. If
+   several tests share the cause, fix it once, then re-run them all.
 5. Re-run the affected files with `test_run` after each fix. Repeat until green or stuck.
 6. Stuck after a genuine attempt → `test.fixme()` with a comment describing observed vs expected.
 
 # Rules
 
 - Never weaken an assertion (specific → vague, or delete it) to get green. That hides a
-  regression. Prefer `fixme` with a comment over a silent loosening.
+  regression. Prefer `fixme` with a comment over a silent loosening. The same applies to a
+  schema: never widen `z.strictObject()` to `z.object()` or drop a field to make `.parse()` pass.
 - Preserve the file's GIVEN/WHEN/THEN steps, single tag, fixture import, and lock options.
 - Locator priority and banned patterns are in the conventions card; the hook rejects violations.
 - Never `networkidle`, never `waitForTimeout`.

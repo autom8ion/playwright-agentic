@@ -19,7 +19,10 @@ test, a page object, or a locator — you list candidates for the human.
    Keep the two summary lines and every FAIL/FLAKY line.
 2. **Heal what broke.** If there are FAIL/FLAKY lines:
    `Agent(playwright-orchestrator)` with `Mode: heal. Scope: <the failing files>` and the FAIL
-   lines pasted. One call. Record its report's verdicts and "Needs a human" items.
+   lines pasted. One call. The orchestrator screens for a broken shared auth session first and
+   regenerates it itself if that's the cause, before any per-test triage — a heal report of
+   "DONE, session regenerated" with zero verdicts is that path, not a no-op. Record its report's
+   verdicts and "Needs a human" items.
 3. **Extend coverage** only if the request describes a changed or new feature:
    `Agent(playwright-orchestrator)` with `Mode: coverage. Task: <the described change>`. One call
    per described feature, sequential.
