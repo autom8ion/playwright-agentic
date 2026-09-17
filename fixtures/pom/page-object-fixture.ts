@@ -7,6 +7,9 @@ import { PracticeFormPage } from '../../pages/PracticeFormPage';
 import { AlertsPage } from '../../pages/AlertsPage';
 import { AccordionPage } from '../../pages/AccordionPage';
 import { ButtonsPage } from '../../pages/ButtonsPage';
+import { HeaderComponent } from '../../pages/components/HeaderComponent';
+import { FooterComponent } from '../../pages/components/FooterComponent';
+import { GroupMenuComponent } from '../../pages/components/GroupMenuComponent';
 
 export type PageObjectFixtures = {
     loginPage: LoginPage;
@@ -17,6 +20,9 @@ export type PageObjectFixtures = {
     alertsPage: AlertsPage;
     accordionPage: AccordionPage;
     buttonsPage: ButtonsPage;
+    headerComponent: HeaderComponent;
+    footerComponent: FooterComponent;
+    groupMenuComponent: GroupMenuComponent;
 };
 
 export const test = base.extend<PageObjectFixtures>({
@@ -43,5 +49,14 @@ export const test = base.extend<PageObjectFixtures>({
     },
     buttonsPage: async ({ page }, use) => {
         await use(new ButtonsPage(page));
+    },
+    headerComponent: async ({ page }, use) => {
+        await use(new HeaderComponent(page));
+    },
+    footerComponent: async ({ page }, use) => {
+        await use(new FooterComponent(page));
+    },
+    groupMenuComponent: async ({ page }, use) => {
+        await use(new GroupMenuComponent(page));
     },
 });

@@ -54,7 +54,9 @@ test.describe('Web Tables', () => {
 ## Fixtures available (destructure from the test callback)
 
 `loginPage` `bookStorePage` `profilePage` `webTablesPage` `practiceFormPage` `alertsPage`
-`accordionPage` · `apiRequest({ method, url, data?, token? })` · `apiSession` (`userId`, `token`)
+`accordionPage` `buttonsPage` · `headerComponent` `footerComponent` `groupMenuComponent`
+(shared header/footer/left-nav, present on every page — see Components below) ·
+`apiRequest({ method, url, data?, token? })` · `apiSession` (`userId`, `token`)
 · `createdBook` (adds + removes one catalog book) · `resetStorageState()` (start logged out).
 
 ## Page object shape
@@ -87,6 +89,14 @@ New page object → also register it in `fixtures/pom/page-object-fixture.ts` (t
 entry) and add its path to `Routes` in `enums/endpoints.ts`. Native dialogs: race
 `page.waitForEvent('dialog').then(d => d.accept())` against the click inside `Promise.all`
 (see `pages/AlertsPage.ts`).
+
+## Components
+
+Something that appears identically on multiple pages (header, footer, nav menu) is a
+**component**, not a page object: same three-section shape, lives in
+`pages/components/<Name>Component.ts`, registers in the same fixture file, usually has no
+`goto()`. Extract one only when a locator/action would otherwise be copied onto more than one
+page object — see `pages/components/GroupMenuComponent.ts`.
 
 ## Where files go
 

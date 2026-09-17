@@ -70,7 +70,7 @@ config/              env.ts — typed access to env/.env
 enums/               endpoints, messages, tags — no magic strings in tests
 fixtures/pom/        test-options.ts is the only import point for specs
 helpers/             auth.ts — API helpers shared by setup + scripts
-pages/               Page Object Model classes
+pages/               Page Object Model classes; pages/components/ for cross-page header/footer/nav
 specs/               Test plans written by the planner agent
 test-data/           factories/ (Faker), static/ (as const), schemas/ (Zod)
 tests/app/           functional/, api/, e2e/, auth.setup.ts, seed.spec.ts

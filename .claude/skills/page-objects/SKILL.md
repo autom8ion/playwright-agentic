@@ -54,6 +54,21 @@ export class LoginPage {
   field (instead of a getter) is the classic source of "stale element"
   flakiness. See `.claude/skills/locators-assertions/SKILL.md` for how to pick the locator itself.
 
+## Components
+
+A **component** is the same three-section class as a page object, but for something that
+appears identically across multiple pages — a header, footer, or nav menu — instead of one
+page's own content. Components live in `pages/components/<Name>Component.ts`, register in
+`fixtures/pom/page-object-fixture.ts` exactly like a page, and tests reach them the same way:
+`groupMenuComponent`, not `new GroupMenuComponent(page)`. A component usually has no `goto()`
+(it's not a route); it may still expose action methods for shared behavior (e.g.
+`GroupMenuComponent.navigateTo(category, link)` for the site's accordion nav). See
+`pages/components/HeaderComponent.ts`, `FooterComponent.ts`, `GroupMenuComponent.ts`.
+
+Reach for a component when a locator/action would otherwise be copy-pasted onto more than one
+page object. Don't extract one for something that only ever appears on a single page — that's
+just a page object.
+
 ## Before writing or editing a page object
 
 Explore the real page first — don't invent a `getByRole` name or
