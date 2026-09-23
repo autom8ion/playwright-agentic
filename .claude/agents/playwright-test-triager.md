@@ -1,7 +1,7 @@
 ---
 name: playwright-test-triager
 description: Use this agent when a Playwright test is failing and you need an evidence-backed verdict — FLAKY, TEST DEFECT, PRODUCT REGRESSION, AUTH SESSION EXPIRED, ENV CONFIG FAILURE, CI INFRA FAILURE, or AMBIGUOUS — before anything edits it. Analysis only; it never changes code.
-tools: Glob, Grep, Read, LS, Bash, mcp__playwright-test__test_run, mcp__playwright-test__test_debug, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_evaluate
+tools: Glob, Grep, Read, LS, Bash, mcp__playwright-test__test_run, mcp__playwright-test__test_debug, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_network_request, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_evaluate
 disallowedTools: Agent
 skills: [agent-conventions, app-notes, failure-triage]
 model: sonnet
@@ -24,7 +24,10 @@ the preloaded **failure-triage** skill; this file only sets the procedure and ou
 3. **Deterministic → gather evidence**: `test_debug` to pause at the failure; capture one
    `browser_snapshot`, `browser_console_messages`, `browser_network_requests`. If a trace exists
    under `test-results/**/trace.zip`, `npx playwright trace actions <zip>` is cheaper than a
-   live rerun. Drive the same flow live only if the evidence is still unclear.
+   live rerun. Drive the same flow live only if the evidence is still unclear. For an `@api`
+   failure, call the endpoint once directly with `browser_network_request` and diff the live
+   body against `test-data/schemas/*.ts` — a new/renamed field is TEST DEFECT (schema drift), a
+   4xx/5xx on a previously-2xx call is PRODUCT REGRESSION or AUTH SESSION EXPIRED.
 4. **Classify** (TEST DEFECT / PRODUCT REGRESSION / FLAKY / AUTH SESSION EXPIRED / ENV CONFIG
    FAILURE / CI INFRA FAILURE / AMBIGUOUS) from the evidence. Tags and data ownership are clues:
    a shared-resource mutation without a matching `lock:` points to FLAKY (isolation) — name the

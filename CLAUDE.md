@@ -66,6 +66,7 @@ digest — use it (not raw `npm test` output) whenever the result feeds an agent
 .claude/            Claude Code constitution, skills, agents, enforcement hook
 .claude/agents/      Playwright plan/generate/heal subagent definitions
 .claude/prompts/     Canonical prompt templates for the agents above
+docs/                ARCHITECTURE.md — agent/hook diagram and the agentic flow
 config/              env.ts — typed access to env/.env
 enums/               endpoints, messages, tags — no magic strings in tests
 fixtures/pom/        test-options.ts is the only import point for specs
@@ -78,16 +79,20 @@ scripts/             one-off/CI scripts (setup-test-user, version checks)
 .mcp.json            Registers the Playwright test MCP server (agents' tools)
 ```
 
-## Plan → Generate → Heal → Triage → Stabilize agents
+## Plan → Generate → Heal → Triage → Stabilize → Review agents
+
+Diagram and step-by-step flow: `docs/ARCHITECTURE.md`.
 
 **Entry points: `/coverage <what to cover>`, `/heal [file|@tag]`, and `/maintain [what changed]`**
 (skills). The first two make one `Agent` call to **`playwright-orchestrator`**
 (`.claude/agents/playwright-orchestrator.md`, sonnet), which runs the pipeline below and returns
 a ≤ 40-line report; `/maintain` calls **`playwright-maintainer`**
 (`.claude/agents/playwright-maintainer.md`), which wraps the orchestrator in a full pass (both
-suite tiers, heal, optional coverage, audits for dead scenarios / orphaned locators / `fixme`s /
-chronic CI flakes) and never deletes anything itself. The main session never hand-drives leaf
-agents or reads raw test output. Five leaf subagents, backed by the
+suite tiers, heal, optional coverage, audits for dead scenarios / orphaned locators and enum
+members / planned-but-ungenerated scenarios / `fixme`s / chronic CI flakes) and never deletes
+anything itself. The orchestrator also has a `gap-audit` mode (planner walks the app nav and
+writes `specs/coverage-gaps.md` with paste-ready `/coverage` lines). The main session never
+hand-drives leaf agents or reads raw test output. Six leaf subagents, backed by the
 `playwright-test` MCP server (`.mcp.json`), explore the app and write/fix tests via real
 browser interaction rather than guessed selectors:
 
@@ -105,6 +110,11 @@ browser interaction rather than guessed selectors:
 - **`playwright-flaky-stabilizer`** (`.claude/agents/playwright-flaky-stabilizer.md`) — fixes a
   test's flakiness root cause (races, isolation, ordering) and verifies with repeated runs, not
   one pass.
+- **`playwright-test-reviewer`** (`.claude/agents/playwright-test-reviewer.md`) — analysis only,
+  no edits: reads what the writer agents (or a human) just changed and reports the semantic
+  Constitution violations the regex hook can't see (weak assertions, wrong tag, CSS where a role
+  would do, factory-vs-static data). BLOCKERs go back to the healer once; the orchestrator runs
+  it at the end of every coverage and heal pass.
 
 All leaf agents preload `.claude/skills/agent-conventions/SKILL.md` (the compact rule card)
 and `.claude/skills/app-notes/SKILL.md` (verified facts about the target app), are capped with

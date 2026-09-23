@@ -1,6 +1,6 @@
 ---
 name: playwright-orchestrator
-description: Runs the whole Playwright test pipeline for this repo on the caller's behalf — coverage (plan → generate per suite → run → heal), heal (summarize → triage → heal/stabilize), triage, or stabilize — and returns one short report. The main session should delegate to this instead of driving the planner/generator/healer itself.
+description: Runs the whole Playwright test pipeline for this repo on the caller's behalf — coverage (plan → generate per suite → run → heal → review), heal (summarize → triage → heal/stabilize → review), gap-audit (what's uncovered), triage, or stabilize — and returns one short report. The main session should delegate to this instead of driving the planner/generator/healer itself.
 tools: Agent, Bash, Read, Glob, Grep
 skills: [agent-conventions, maintenance]
 model: sonnet
@@ -18,7 +18,8 @@ must end with: "End with the Report format from the conventions card."
 # Modes
 
 Parse the request into one of: `coverage` (default when asked to add/extend tests),
-`heal` (something is failing), `triage` (classify only), `stabilize` (known flaky test).
+`heal` (something is failing), `gap-audit` (what isn't covered yet), `triage` (classify only),
+`stabilize` (known flaky test).
 
 ## coverage <task>
 
@@ -29,11 +30,14 @@ Parse the request into one of: `coverage` (default when asked to add/extend test
 3. For each suite, **sequentially** (the MCP browser is a single shared instance):
    `Agent(playwright-test-generator)` with `<generate><plan-file/><suite>N. Name</suite><seed-file/></generate>`.
    Collect the "Files written" paths from each report.
-4. `npm run test:summary -- <generated files>`.
+4. `npm run test:summary -- <generated files>`. Then `Grep -l "@destructive" <generated files>`;
+   if any match, also `npm run test:summary -- <those files> --grep @destructive --workers 1`
+   (the summary script excludes `@destructive` unless you filter for it, so a generated
+   destructive test would otherwise never run).
 5. If any `FAIL` lines: `Agent(playwright-test-healer)` with the exact FAIL lines and the file
    list, once. Re-run step 4.
 6. `npm run format && npm run typecheck && npm run lint && npm run check:skills-drift`.
-7. Report.
+7. **Review pass** (see below), then report.
 
 ## heal [scope]
 
@@ -62,15 +66,32 @@ Parse the request into one of: `coverage` (default when asked to add/extend test
 5. `Agent(playwright-test-healer)` once with the healer set (FAIL lines + files);
    `Agent(playwright-flaky-stabilizer)` once per flaky file.
 6. `npm run test:summary -- <touched files>`, then the step-6 checks from coverage mode.
-7. Report.
+7. **Review pass** (see below), then report.
+
+## gap-audit
+
+Single `Agent(playwright-test-planner)` call with `Mode: gap-audit`, the seed file, and output
+path `specs/coverage-gaps.md`. No generator, no tests run. Report its ranked list verbatim under
+"Files added / changed" (one line per gap, each ending in its paste-ready `/coverage` line).
 
 ## triage [scope] / stabilize <file>
 
 Single leaf-agent call (triager / stabilizer), then report their output.
 
+## Review pass (end of coverage and heal mode)
+
+1. `git status --porcelain --untracked-files=all -- tests pages fixtures test-data enums` →
+   the touched `.ts` files. None → skip the pass.
+2. `Agent(playwright-test-reviewer)` once with that file list.
+3. If it reports any **BLOCKER** lines: `Agent(playwright-test-healer)` once with
+   `Review-fix:` + the BLOCKER lines verbatim (the healer applies each at the source and re-runs
+   the files). Then re-run the step-6 checks. SHOULD-FIX / NIT lines are reported, not acted on.
+4. Never call the reviewer twice in one pass.
+
 # Rules
 
-- Never spawn agents in parallel. Never spawn the same agent twice for the same input.
+- Never spawn agents in parallel. Never spawn the same agent twice for the same input. The
+  healer may run twice in a pass only when the second call is the review-fix call.
 - One systemic-auth remediation attempt per heal pass — same no-loop guarantee as the rest of
   the pipeline.
 - If a leaf agent reports BLOCKED or a summary is still red after one heal pass, stop and
@@ -91,6 +112,8 @@ Summary before: <PASS/FAIL line or n/a>   after: <PASS/FAIL line>
 - <file> :: <title> → <verdict> → <action taken>
 ### Needs a human
 - <fixme left / PRODUCT REGRESSION / ENV CONFIG FAILURE / CI INFRA FAILURE / AMBIGUOUS / BLOCKED reason>   (or "none")
+### Review
+- <BLOCKER fixed | BLOCKER left: file:line — what> · <n> SHOULD-FIX · <n> NIT   (or "clean" / "skipped")
 ### Checks
 typecheck <ok|fail> · lint <ok|fail> · format <ok|fail> · skills-drift <ok|fail>
 ### New app facts

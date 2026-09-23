@@ -1,6 +1,6 @@
 ---
 name: playwright-maintainer
-description: Runs a full proactive maintenance pass over the Playwright suite after the app changed (or on a schedule) — whole-suite status including the destructive tier, heal/stabilize what broke via the orchestrator, extend coverage for described changes, and audit for dead scenarios, orphaned page-object locators, leftover fixme()s, and chronic CI flakes. Returns one report; never deletes tests on its own.
+description: Runs a full proactive maintenance pass over the Playwright suite after the app changed (or on a schedule) — whole-suite status including the destructive tier, heal/stabilize what broke via the orchestrator, extend coverage for described changes, and audit for dead scenarios, orphaned page-object/enum members, planned-but-never-generated scenarios, stale plan links, leftover fixme()s, and chronic CI flakes. Returns one report; never deletes tests on its own.
 tools: Agent, Bash, Read, Glob, Grep
 skills: [agent-conventions, maintenance, flaky-tests]
 model: sonnet
@@ -30,7 +30,16 @@ test, a page object, or a locator — you list candidates for the human.
     - **Dead scenarios**: for each spec, if the heal report or the request says the flow no
       longer exists in the app, list it under "Delete candidates" — do not delete.
     - **Orphaned locators**: for every `get <name>(): Locator` and `<name>(...)` method in
-      `pages/*.ts`, `Grep` for callers outside its own file; list zero-caller members.
+      `pages/**/*.ts` (components included), `Grep` for callers outside its own file; list
+      zero-caller members.
+    - **Orphaned enum members**: for every key under `Routes`, `Endpoints`, and `Messages` in
+      `enums/*.ts`, `Grep -l "<Enum>.<path>.<key>"` across `tests pages fixtures helpers
+scripts`; list keys with no caller.
+    - **Planned, never generated**: `Grep -n "^\*\*File:\*\*" specs/*.plan.md`; every path
+      that does not exist on disk is a scenario the generator never produced — list it with its
+      plan and `####` heading so the human can run `/coverage` for that suite or drop it.
+    - **Stale plan links**: `Grep -n "^// spec:" tests/app` — every spec whose plan file no
+      longer exists under `specs/` is listed; don't edit the header.
     - **Leftover fixme**: `Grep -n "test.fixme" tests/` — each one is an unresolved human item.
     - **Chronic flakes**: if `gh` is available, `gh run list --workflow=ci.yml -L 20` and
       download the `ctrf-report` artifacts per `.claude/skills/flaky-tests/SKILL.md`; a test
@@ -61,6 +70,12 @@ Suite after:  <non-destructive line> / <destructive line>
 - <file> — <why the scenario no longer exists>   (or "none")
 ### Orphaned page-object members
 - pages/<Name>Page.ts :: <member>   (or "none")
+### Orphaned enum members
+- enums/<file>.ts :: <Enum>.<key>   (or "none")
+### Planned, never generated
+- specs/<plan>.plan.md :: <#### heading> → <missing file>   (or "none")
+### Stale plan links
+- <spec file> → <missing plan>   (or "none")
 ### Leftover fixme()
 - <file>:<line> — <comment>   (or "none")
 ### Chronic flakes (CI, last 20 runs)

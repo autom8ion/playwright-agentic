@@ -75,6 +75,26 @@ One call to the `playwright-orchestrator` subagent: planner → generator (once 
 `npm run test:summary` → scoped heal if needed → format/typecheck/lint. You get a ≤ 40-line
 report; review `git diff`, run anything you want to double-check, commit.
 
+## Find what isn't covered yet (agentic)
+
+```
+Agent({ subagent_type: "playwright-orchestrator", prompt: "Mode: gap-audit." })
+```
+
+The planner walks the app's left-nav, compares it against `Routes`, `pages/`, and spec titles,
+and writes `specs/coverage-gaps.md`: one ranked line per uncovered or thin page, each ending in
+a paste-ready `/coverage …` command. Nothing else is written.
+
+## Review a hand-written test change (agentic)
+
+```
+Agent({ subagent_type: "playwright-test-reviewer", prompt: "Review the working-tree changes." })
+```
+
+Read-only. Reports BLOCKER / SHOULD-FIX / NIT with `file:line` for the semantic rules the hook
+can't check (assertion actually proves the scenario, tag fits, CSS where a role would do, data
+strategy). `/coverage` and `/heal` already run it at the end of every pass.
+
 ## Full maintenance pass (periodic / after a release)
 
 ```

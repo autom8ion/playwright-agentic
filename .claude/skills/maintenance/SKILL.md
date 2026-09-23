@@ -48,6 +48,9 @@ One known-stale file, one flaky test, one triage question — call the leaf agen
 - `Agent({subagent_type: "playwright-flaky-stabilizer", prompt: "Stabilize <file> — flaky in N of last 20 CI runs"})`
 - Planner: task + seed (`tests/app/seed.spec.ts`) + plan path (`specs/<name>.plan.md`).
 - Generator: **one call per suite** (`### N.` heading), sequential — the MCP browser is shared.
+- `Agent({subagent_type: "playwright-test-reviewer", prompt: "Review <files or 'the working-tree changes'>"})`
+  — read-only semantic review; the orchestrator already runs it at the end of coverage/heal.
+- Orchestrator `Mode: gap-audit` — planner lists uncovered pages in `specs/coverage-gaps.md`.
 
 Every leaf agent has the `agent-conventions` and `app-notes` skills preloaded and ends with a
 fixed ≤ 25-line report; you do not need to tell them to read `CLAUDE.md`.
