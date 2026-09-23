@@ -27,7 +27,18 @@ only describes the procedure.
 4. If a scenario needs a locator not on a page object, add it to the page object with
    `Edit` (or create the page object with `Write` and register it in
    `fixtures/pom/page-object-fixture.ts` + `enums/endpoints.ts`) **before** writing the spec.
-5. Stop when every scenario in the suite has a file. Do not run the suite yourself; the caller
+   A locator the plan shows on more than one page (header, footer, nav) goes on a
+   `pages/components/*Component.ts` instead.
+5. **Supporting files, before the spec that needs them:**
+    - `@api` scenario → the suite's **Response shape** becomes a `z.strictObject()` in
+      `test-data/schemas/<name>-schema.ts` (one field per line, nullable where the plan says so)
+      and the endpoint key goes in `Endpoints` in `enums/endpoints.ts`. Never re-fetch the
+      endpoint to guess a field; if the plan has no Response shape, write the spec asserting
+      status only and say so in the report.
+    - Unique happy-path data (a record, a user, a form) → a Faker factory in
+      `test-data/factories/*.ts`; boundary / invalid values → `test-data/static/*.ts` `as const`.
+    - UI copy the spec asserts verbatim → `enums/messages.ts`, referenced from the spec.
+6. Stop when every scenario in the suite has a file. Do not run the suite yourself; the caller
    runs and heals.
 
 # Rules that override the generic generator behavior

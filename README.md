@@ -61,16 +61,19 @@ Start with `CLAUDE.md` for the rules and `AI-WORKFLOWS.md` for step-by-step
 playbooks (add a test, add a page object, add an API test, ...).
 
 Three slash commands drive the agentic workflow: **`/coverage <what to cover>`**
-(plan → generate → run → heal), **`/heal [file|@tag]`** (summarize →
-triage → heal/stabilize), and **`/maintain [what changed]`** (a full pass:
+(plan → generate → run → heal → review), **`/heal [file|@tag]`** (summarize →
+triage → heal/stabilize → review), and **`/maintain [what changed]`** (a full pass:
 both suite tiers, heal, coverage, and audits for dead scenarios, orphaned
-locators, leftover `fixme()`s, and chronic CI flakes, via the
-`playwright-maintainer` subagent). The first two make a single call to the
-`playwright-orchestrator` subagent, which coordinates five leaf agents
-(`.claude/agents/playwright-*.md`, via the `playwright-test` MCP server in
-`.mcp.json`) against the real running app — a **planner**, a per-suite
-**generator**, a **healer**, a **triager**, and a **flaky stabilizer** — and
-returns one short report. The leaf agents preload a compact conventions card
+locators and enum members, planned-but-ungenerated scenarios, leftover
+`fixme()`s, and chronic CI flakes, via the `playwright-maintainer` subagent).
+The first two make a single call to the `playwright-orchestrator` subagent,
+which coordinates six leaf agents (`.claude/agents/playwright-*.md`, via the
+`playwright-test` MCP server in `.mcp.json`) against the real running app —
+a **planner** (also a `gap-audit` mode that lists uncovered pages), a
+per-suite **generator**, a **healer**, a **triager**, a **flaky stabilizer**,
+and a read-only **reviewer** that catches what the regex hook can't — and
+returns one short report. `docs/ARCHITECTURE.md` has the diagram and the
+flow step by step. The leaf agents preload a compact conventions card
 and a file of verified app facts instead of re-reading the skills each run,
 are turn-capped, and are backed by three hooks (block banned patterns at
 write time, feed eslint/tsc errors back on the same turn, refuse to let a

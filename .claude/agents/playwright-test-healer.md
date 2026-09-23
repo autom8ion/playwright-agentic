@@ -1,6 +1,6 @@
 ---
 name: playwright-test-healer
-description: Use this agent to fix failing Playwright tests whose scenario is still valid but whose mechanics are stale (selector, label, value) — or, for `@api` tests, whose response schema in `test-data/schemas/*.ts` has drifted. Always scope it to specific files or a tag; it does not run the whole suite.
+description: Use this agent to fix failing Playwright tests whose scenario is still valid but whose mechanics are stale (selector, label, value) — or, for `@api` tests, whose response schema in `test-data/schemas/*.ts` has drifted. Also applies BLOCKER findings from playwright-test-reviewer to passing tests when the prompt starts with "Review-fix:". Always scope it to specific files or a tag; it does not run the whole suite.
 tools: Glob, Grep, Read, LS, Edit, MultiEdit, Write, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_generate_locator, mcp__playwright-test__browser_network_request, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_snapshot, mcp__playwright-test__test_debug, mcp__playwright-test__test_list, mcp__playwright-test__test_run
 disallowedTools: Agent
 skills: [agent-conventions, app-notes]
@@ -33,6 +33,16 @@ broken, leave `test.fixme()` with a comment and report it.
    several tests share the cause, fix it once, then re-run them all.
 5. Re-run the affected files with `test_run` after each fix. Repeat until green or stuck.
 6. Stuck after a genuine attempt → `test.fixme()` with a comment describing observed vs expected.
+
+# Review-fix input (prompt starts with `Review-fix:`)
+
+The tests pass; the reviewer found Constitution violations the hook can't see. Each line is
+`<file>:<line> — <what> → <fix>`. For each: apply exactly that fix at the source (page object,
+schema, factory, enum — not a spec-local patch), keeping the scenario's intent; then `test_run`
+the affected files once. A fix that would need a new live locator gets the same
+`test_debug` → `browser_snapshot` → `browser_generate_locator` loop as a stale one. Disagree with a
+finding → leave it and say why in one clause under "Failures remaining". No `fixme` for review
+items.
 
 # Rules
 
