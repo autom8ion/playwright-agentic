@@ -19,6 +19,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `playwright-test-planner`: "edge cases" in scenario design is now an explicit checklist
+  (inputs, required/combos, interaction, state/data, session, API), each item probed live
+  before it's planned, tagged `@regression`, with values named in `test-data/static/*.ts`.
 - Orchestrator coverage mode now also runs any generated `@destructive` spec with `--workers 1`
   (the summary script excludes that tag by default, so those specs previously never ran).
 - Planner captures a live **Response shape** per API suite and de-duplicates against already
