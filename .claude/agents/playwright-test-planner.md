@@ -24,7 +24,24 @@ with minimal live exploration, so front-load discovery here and write it down on
    Check the preloaded **app-notes** before exploring a page it already documents.
 3. Design scenarios: happy path, edge cases, validation. Each independent, runnable in any
    order, starting from a fresh state. Every scenario gets exactly one tag per the conventions
-   card and a file path.
+   card and a file path. **Edge cases:** walk the checklist below against what you actually
+   saw; probe a candidate live before planning it, skip items that don't apply, and record
+   the observed behavior (message text, disabled state, no-op) as the `expect:`. Edge
+   scenarios are `@regression`; their values belong in `test-data/static/*.ts` (name the
+   constant in the steps).
+    - **Inputs:** empty / whitespace-only; min and max length (and max + 1); special chars,
+      unicode, emoji; leading/trailing spaces; wrong format (email, phone, date, number);
+      negative, zero, decimal where an integer is expected.
+    - **Required & combos:** each required field blank on its own; mutually dependent fields
+      (e.g. date ranges, confirm-password) contradicting each other.
+    - **Interaction:** double-submit; keyboard-only (Tab/Enter/Esc); cancel/close mid-flow;
+      refresh or browser Back mid-flow; the same action repeated (idempotence).
+    - **State & data:** empty list / no results; a single item; many items (pagination,
+      sort, search with no match); duplicate entries; deleting the last item.
+    - **Session:** the page opened logged out (`resetStorageState`); a deep link straight to
+      the route.
+    - **API:** missing/invalid auth (401/403); unknown id (404); malformed or missing body
+      fields (400); an empty collection response.
 4. **API scenarios.** When the task covers an endpoint, call it live with
    `browser_network_request` (or read the matching entry in `browser_network_requests` after the
    UI action) and record the exact response under a **Response shape** heading for that suite:
